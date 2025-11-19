@@ -1,0 +1,9 @@
+// Common components exports
+export { default as EmptyState } from './EmptyState.vue'
+export { default as Badge } from './Badge.vue'
+export { default as LoadingSpinner } from './LoadingSpinner.vue'
+export { default as StatCard } from './StatCard.vue'
+export { default as Avatar } from './Avatar.vue'
+export { default as ConfirmDialog } from './ConfirmDialog.vue'
+export { default as BaseButton } from './BaseButton.vue'
+export { default as BaseInput } from './BaseInput.vue'
