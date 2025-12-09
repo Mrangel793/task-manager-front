@@ -16,8 +16,16 @@
       </button>
     </div>
 
+    <!-- Estado de carga -->
+    <div v-if="loading" class="bg-white rounded-lg shadow p-12">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
+        <p class="mt-4 text-sm text-gray-600">Cargando notificaciones...</p>
+      </div>
+    </div>
+
     <!-- Lista de notificaciones agrupadas por fecha -->
-    <div v-if="groupedNotifications.length > 0" class="space-y-6">
+    <div v-else-if="groupedNotifications.length > 0" class="space-y-6">
       <div v-for="group in groupedNotifications" :key="group.title" class="bg-white rounded-lg shadow overflow-hidden">
         <!-- Título del grupo -->
         <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
@@ -29,7 +37,8 @@
           <router-link
             v-for="notification in group.notifications"
             :key="notification.id"
-            :to="notification.link || '#'"
+            :to="getNotificationLink(notification)"
+            @click="handleNotificationClick(notification)"
             class="block px-4 py-4 hover:bg-gray-50 transition-colors"
             :class="{ 'bg-blue-50': !notification.read }"
           >
@@ -83,130 +92,89 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useNotificationStore } from '@/stores'
 
-// TODO: Obtener desde un store de notificaciones
-const notifications = ref([
-  {
-    id: 1,
-    type: 'task',
-    title: 'Nueva tarea asignada',
-    message: 'Se te ha asignado la tarea "Revisar documentación"',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // hace 2 horas
-    read: false,
-    link: '/tasks/1'
-  },
-  {
-    id: 2,
-    type: 'reminder',
-    title: 'Recordatorio de tarea',
-    message: 'La tarea "Actualizar sistema" vence en 1 hora',
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // hace 5 horas
-    read: false,
-    link: '/tasks/2'
-  },
-  {
-    id: 3,
-    type: 'status_change',
-    title: 'Tarea completada',
-    message: 'Juan completó la tarea "Configurar servidor"',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // ayer
-    read: true,
-    link: '/tasks/3'
+const notificationStore = useNotificationStore()
+const { groupedNotifications, unreadCount, loading } = storeToRefs(notificationStore)
+
+// Cargar notificaciones al montar
+onMounted(async () => {
+  try {
+    await notificationStore.fetchNotifications()
+  } catch (error) {
+    console.error('Error al cargar notificaciones:', error)
   }
-])
-
-const unreadCount = computed(() =>
-  notifications.value.filter(n => !n.read).length
-)
-
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
-  // TODO: Actualizar en el backend
-}
-
-// Agrupar notificaciones por fecha
-const groupedNotifications = computed(() => {
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-
-  const groups = {
-    today: [],
-    yesterday: [],
-    thisWeek: [],
-    older: []
-  }
-
-  notifications.value.forEach(notification => {
-    const notifDate = new Date(notification.timestamp)
-
-    // Calcular tiempo relativo
-    const diffMs = now - notifDate
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    let timeAgo
-    if (diffMins < 1) {
-      timeAgo = 'Justo ahora'
-    } else if (diffMins < 60) {
-      timeAgo = `Hace ${diffMins} ${diffMins === 1 ? 'minuto' : 'minutos'}`
-    } else if (diffHours < 24) {
-      timeAgo = `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`
-    } else if (diffDays < 7) {
-      timeAgo = `Hace ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`
-    } else {
-      timeAgo = notifDate.toLocaleDateString('es-CO')
-    }
-
-    const enrichedNotification = { ...notification, timeAgo }
-
-    if (notifDate >= today) {
-      groups.today.push(enrichedNotification)
-    } else if (notifDate >= yesterday) {
-      groups.yesterday.push(enrichedNotification)
-    } else if (notifDate >= weekAgo) {
-      groups.thisWeek.push(enrichedNotification)
-    } else {
-      groups.older.push(enrichedNotification)
-    }
-  })
-
-  const result = []
-  if (groups.today.length) result.push({ title: 'Hoy', notifications: groups.today })
-  if (groups.yesterday.length) result.push({ title: 'Ayer', notifications: groups.yesterday })
-  if (groups.thisWeek.length) result.push({ title: 'Esta semana', notifications: groups.thisWeek })
-  if (groups.older.length) result.push({ title: 'Anteriores', notifications: groups.older })
-
-  return result
 })
 
+const markAllAsRead = async () => {
+  try {
+    await notificationStore.markAllAsRead()
+  } catch (error) {
+    console.error('Error al marcar todas como leídas:', error)
+  }
+}
+
+const handleNotificationClick = async (notification) => {
+  // Marcar como leída al hacer clic
+  if (!notification.read) {
+    try {
+      await notificationStore.markAsRead(notification.id)
+    } catch (error) {
+      console.error('Error al marcar como leída:', error)
+    }
+  }
+}
+
+// Mapear tipos del backend a tipos del frontend
+const mapNotificationType = (backendType) => {
+  const typeMap = {
+    'task_assigned': 'task',
+    'task_reassigned': 'task',
+    'task_reminder': 'reminder',
+    'task_due_soon': 'reminder',
+    'task_overdue': 'reminder',
+    'status_changed': 'status_change'
+  }
+  return typeMap[backendType] || 'task'
+}
+
 const getIconBgClass = (type) => {
+  const mappedType = mapNotificationType(type)
   const classes = {
     task: 'bg-blue-100',
     reminder: 'bg-yellow-100',
     status_change: 'bg-green-100'
   }
-  return classes[type] || 'bg-gray-100'
+  return classes[mappedType] || 'bg-gray-100'
 }
 
 const getIconColorClass = (type) => {
+  const mappedType = mapNotificationType(type)
   const classes = {
     task: 'text-blue-600',
     reminder: 'text-yellow-600',
     status_change: 'text-green-600'
   }
-  return classes[type] || 'text-gray-600'
+  return classes[mappedType] || 'text-gray-600'
 }
 
 const getIconPath = (type) => {
+  const mappedType = mapNotificationType(type)
   const paths = {
     task: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     reminder: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
     status_change: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
   }
-  return paths[type] || 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+  return paths[mappedType] || 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+}
+
+// Obtener el link de la notificación
+const getNotificationLink = (notification) => {
+  if (notification.task?.id) {
+    return `/tasks/${notification.task.id}`
+  }
+  return notification.link || '#'
 }
 </script>

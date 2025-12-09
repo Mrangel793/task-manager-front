@@ -1,0 +1,28 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo con gradiente -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0284c7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="80" fill="url(#grad)"/>
+
+  <!-- Letras TM -->
+  <text x="256" y="340"
+        font-family="Arial, sans-serif"
+        font-size="280"
+        font-weight="bold"
+        fill="white"
+        text-anchor="middle">TM</text>
+
+  <!-- Pequeño ícono de check/tarea -->
+  <path d="M 380 140 L 420 180 L 380 220"
+        stroke="white"
+        stroke-width="20"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

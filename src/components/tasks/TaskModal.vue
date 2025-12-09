@@ -34,23 +34,49 @@
             :disabled="isSubmitting"
             required
             @blur="validateSingleField('title')"
-          />
+          >
+            <template #icon-right>
+              <VoiceInputButton
+                v-model="formData.title"
+                :disabled="isSubmitting"
+                :show-status="false"
+                size="small"
+              />
+            </template>
+          </BaseInput>
 
           <!-- Descripción -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
               Descripción
             </label>
-            <textarea
-              v-model="formData.description"
-              rows="3"
-              class="input-field w-full resize-none"
-              :class="{ 'border-red-500': errors.description }"
-              placeholder="Descripción detallada (opcional)"
-              :disabled="isSubmitting"
-              @blur="validateSingleField('description')"
-            ></textarea>
-            <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
+            <div class="relative">
+              <textarea
+                v-model="formData.description"
+                rows="3"
+                class="input-field w-full resize-none pr-12"
+                :class="{ 'border-red-500': errors.description }"
+                placeholder="Descripción detallada (opcional)"
+                :disabled="isSubmitting"
+                @blur="validateSingleField('description')"
+              ></textarea>
+              <!-- Botón de voz para descripción -->
+              <div class="absolute top-2 right-2">
+                <VoiceInputButton
+                  v-model="formData.description"
+                  :disabled="isSubmitting"
+                  :append="true"
+                  :show-status="false"
+                  size="small"
+                  @status-change="handleVoiceStatus"
+                />
+              </div>
+            </div>
+            <!-- Estado de voz -->
+            <p v-if="voiceStatus" class="mt-1 text-xs" :class="voiceStatusClass">
+              {{ voiceStatus }}
+            </p>
+            <p v-else-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
           </div>
 
           <!-- Fecha y Hora -->
@@ -169,6 +195,7 @@ import { useAuthStore } from '@/stores'
 import { taskSchema } from '@/utils/validationSchemas'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import VoiceInputButton from '@/components/common/VoiceInputButton.vue'
 
 const props = defineProps({
   isOpen: {
@@ -209,8 +236,20 @@ const errors = reactive({
 
 const isSubmitting = ref(false)
 const submitError = ref('')
+const voiceStatus = ref('')
+const voiceStatusType = ref('idle')
 
 const isEdit = computed(() => !!props.task)
+
+const voiceStatusClass = computed(() => {
+  const classes = {
+    listening: 'text-blue-600 font-medium',
+    success: 'text-green-600',
+    error: 'text-red-600',
+    idle: ''
+  }
+  return classes[voiceStatusType.value] || ''
+})
 
 const canAssign = computed(() => {
   const role = authStore.userRole
@@ -233,6 +272,11 @@ const ensureAssignee = () => {
     // Convertir a string para que coincida con la validación
     formData.assignee_id = authStore.user?.id ? String(authStore.user.id) : null
   }
+}
+
+const handleVoiceStatus = ({ status, message }) => {
+  voiceStatusType.value = status
+  voiceStatus.value = message
 }
 
 const clearErrors = () => {
