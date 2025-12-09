@@ -22,22 +22,25 @@ export default defineConfig({
         name: 'Task Manager',
         short_name: 'TaskMgr',
         description: 'Aplicación de gestión de tareas',
+        start_url: '/',
+        scope: '/',
         theme_color: '#0ea5e9',
         background_color: '#ffffff',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
