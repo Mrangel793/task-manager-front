@@ -18,7 +18,8 @@
         </div>
 
         <BaseInput v-model="formData.name" label="Nombre completo" placeholder="Juan Pérez" :error="errors.name" required />
-        <BaseInput v-model="formData.phone" label="Teléfono" placeholder="+57 3XX XXX XXXX" :error="errors.phone" required />
+        <BaseInput v-model="formData.email" type="email" label="Correo electrónico" placeholder="usuario@ejemplo.com" :error="errors.email" required />
+        <BaseInput v-model="formData.phone" label="Teléfono" placeholder="+57 3XX XXX XXXX" :error="errors.phone" />
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Rol <span class="text-red-500">*</span></label>
@@ -56,8 +57,8 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
-const formData = reactive({ name: '', phone: '', role: '', password: '', confirmPassword: '' })
-const errors = reactive({ name: '', phone: '', role: '', password: '', confirmPassword: '' })
+const formData = reactive({ name: '', email: '', phone: '', role: '', password: '', confirmPassword: '' })
+const errors = reactive({ name: '', email: '', phone: '', role: '', password: '', confirmPassword: '' })
 const isSubmitting = ref(false)
 const submitError = ref('')
 const isEdit = computed(() => !!route.params.id)

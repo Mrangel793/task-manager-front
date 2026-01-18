@@ -124,6 +124,7 @@
           </div>
         </div>
 
+        <!-- Reportes - Comentado temporalmente (no implementado)
         <div
           @click="goTo('/admin/reports')"
           class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer group"
@@ -138,6 +139,7 @@
             </svg>
           </div>
         </div>
+        -->
 
         <div
           @click="goTo('/admin/config')"

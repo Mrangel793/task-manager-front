@@ -17,7 +17,7 @@
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow p-4 mb-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input v-model="filters.search" type="text" placeholder="Buscar por nombre o teléfono..." class="input-field">
+        <input v-model="filters.search" type="text" placeholder="Buscar por nombre, email o teléfono..." class="input-field">
         <select v-model="filters.role" class="input-field">
           <option value="all">Todos los roles</option>
           <option value="admin">Administrador</option>
@@ -44,6 +44,7 @@
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
@@ -67,7 +68,8 @@
                 {{ getRoleLabel(user.role) }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.phone }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email || '-' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.phone || '-' }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Activo
@@ -110,7 +112,7 @@ const filteredUsers = computed(() => {
   let result = users.value
   if (filters.value.search) {
     const search = filters.value.search.toLowerCase()
-    result = result.filter(u => u.name.toLowerCase().includes(search) || u.phone.includes(search))
+    result = result.filter(u => u.name.toLowerCase().includes(search) || (u.email && u.email.toLowerCase().includes(search)) || (u.phone && u.phone.includes(search)))
   }
   if (filters.value.role !== 'all') {
     result = result.filter(u => normalizeRole(u.role) === filters.value.role)
