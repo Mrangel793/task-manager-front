@@ -12,23 +12,46 @@
     </div>
 
     <div v-else>
-      <!-- Métricas principales -->
+      <!-- Estadísticas de Tareas por Estado -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <!-- Total usuarios (clickeable) -->
+        <!-- Tareas Pendientes -->
         <div
-          @click="showUsersModal = true"
+          @click="openTasksByStatusModal('Pendiente')"
+          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 bg-orange-100 rounded-lg p-3 group-hover:bg-orange-200 transition-colors">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Pendientes</p>
+                <p class="text-2xl font-bold text-gray-900">{{ taskStats.pending }}</p>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Tareas En Progreso -->
+        <div
+          @click="openTasksByStatusModal('En Progreso')"
           class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3 group-hover:bg-blue-200 transition-colors">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Total Usuarios</p>
-                <p class="text-2xl font-bold text-gray-900">{{ metrics.totalUsers }}</p>
+                <p class="text-sm font-medium text-gray-600">En Progreso</p>
+                <p class="text-2xl font-bold text-gray-900">{{ taskStats.inProgress }}</p>
               </div>
             </div>
             <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,44 +60,21 @@
           </div>
         </div>
 
-        <!-- Supervisores (clickeable) -->
+        <!-- Tareas Completadas -->
         <div
-          @click="showSupervisorsModal = true"
-          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3 group-hover:bg-purple-200 transition-colors">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Supervisores</p>
-                <p class="text-2xl font-bold text-gray-900">{{ metrics.supervisors }}</p>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- Operadores (clickeable) -->
-        <div
-          @click="showOperatorsModal = true"
+          @click="openTasksByStatusModal('Completada')"
           class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <div class="flex-shrink-0 bg-green-100 rounded-lg p-3 group-hover:bg-green-200 transition-colors">
                 <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Operadores</p>
-                <p class="text-2xl font-bold text-gray-900">{{ metrics.operators }}</p>
+                <p class="text-sm font-medium text-gray-600">Completadas</p>
+                <p class="text-2xl font-bold text-gray-900">{{ taskStats.completed }}</p>
               </div>
             </div>
             <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,31 +83,32 @@
           </div>
         </div>
 
-        <!-- Tareas totales (clickeable) -->
+        <!-- Tareas Vencidas -->
         <div
-          @click="showTasksModal = true"
+          @click="openTasksByStatusModal('Vencidas')"
           class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
+          :class="{ 'ring-2 ring-red-300': taskStats.overdue > 0 }"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center">
-              <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3 group-hover:bg-yellow-200 transition-colors">
-                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <div class="flex-shrink-0 bg-red-100 rounded-lg p-3 group-hover:bg-red-200 transition-colors">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Tareas Totales</p>
-                <p class="text-2xl font-bold text-gray-900">{{ metrics.totalTasks }}</p>
+                <p class="text-sm font-medium text-gray-600">Vencidas</p>
+                <p class="text-2xl font-bold" :class="taskStats.overdue > 0 ? 'text-red-600' : 'text-gray-900'">{{ taskStats.overdue }}</p>
               </div>
             </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-yellow-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
         </div>
       </div>
 
-      <!-- Quick actions -->
+      <!-- Quick actions - Comentadas temporalmente
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div
           @click="goTo('/admin/users')"
@@ -124,7 +125,6 @@
           </div>
         </div>
 
-        <!-- Reportes - Comentado temporalmente (no implementado)
         <div
           @click="goTo('/admin/reports')"
           class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer group"
@@ -139,7 +139,6 @@
             </svg>
           </div>
         </div>
-        -->
 
         <div
           @click="goTo('/admin/config')"
@@ -157,6 +156,7 @@
           </div>
         </div>
       </div>
+      -->
 
       <!-- Tareas Críticas y Estadísticas -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -614,6 +614,91 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Tareas por Estado -->
+    <div v-if="showTasksByStatusModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="showTasksByStatusModal = false">
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+        <div class="relative bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <!-- Header -->
+          <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">{{ getStatusModalTitle }}</h3>
+              <p class="text-sm text-gray-600 mt-1">{{ filteredTasksByStatus.length }} {{ filteredTasksByStatus.length === 1 ? 'tarea' : 'tareas' }}</p>
+            </div>
+            <button @click="showTasksByStatusModal = false" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="p-6 overflow-y-auto flex-1">
+            <div v-if="filteredTasksByStatus.length === 0" class="text-center py-12 text-gray-500">
+              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p class="font-medium">No hay tareas</p>
+              <p class="text-sm mt-1">No se encontraron tareas con este estado</p>
+            </div>
+            <div v-else class="space-y-2">
+              <div
+                v-for="task in filteredTasksByStatus"
+                :key="task.id"
+                @click="goToTask(task.id)"
+                class="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-200"
+                :class="getTaskRowClass(task)"
+              >
+                <div class="flex items-center space-x-4 flex-1 min-w-0">
+                  <!-- Checkbox visual -->
+                  <div
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                    :class="task.status === 'Completada' ? 'bg-green-500 border-green-500' : 'border-gray-300'"
+                  >
+                    <svg v-if="task.status === 'Completada'" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate" :class="{ 'line-through text-gray-400': task.status === 'Completada' }">
+                      {{ task.title }}
+                    </p>
+                    <div class="flex items-center gap-3 mt-1">
+                      <span class="text-xs text-gray-500">{{ task.assignee_name || 'Sin asignar' }}</span>
+                      <span v-if="task.due_date" class="text-xs" :class="getDueDateColorClass(task)">
+                        {{ formatTaskDate(task.due_date) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                  <span
+                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                    :class="getPriorityBadgeClass(task.priority)"
+                  >
+                    {{ task.priority }}
+                  </span>
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
+            <BaseButton variant="secondary" @click="showTasksByStatusModal = false">
+              Cerrar
+            </BaseButton>
+            <BaseButton variant="primary" @click="goTo('/team/tasks'); showTasksByStatusModal = false">
+              Ver Todas las Tareas
+            </BaseButton>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -635,6 +720,8 @@ const showUsersModal = ref(false)
 const showSupervisorsModal = ref(false)
 const showOperatorsModal = ref(false)
 const showTasksModal = ref(false)
+const showTasksByStatusModal = ref(false)
+const selectedTaskStatus = ref('')
 
 // Métricas
 const metrics = computed(() => {
@@ -778,6 +865,107 @@ const getRoleLabel = (role) => {
 
 const goTo = (path) => {
   router.push(path)
+}
+
+const goToTask = (taskId) => {
+  showTasksByStatusModal.value = false
+  router.push(`/tasks/${taskId}`)
+}
+
+// Función para abrir el modal de tareas por estado
+const openTasksByStatusModal = (status) => {
+  selectedTaskStatus.value = status
+  showTasksByStatusModal.value = true
+}
+
+// Computed para obtener tareas filtradas por estado
+const filteredTasksByStatus = computed(() => {
+  const tasks = taskStore.tasks
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (selectedTaskStatus.value === 'Vencidas') {
+    return tasks.filter(t => {
+      if (!t.due_date || t.status === 'Completada') return false
+      const dueDate = new Date(t.due_date)
+      return dueDate < today
+    }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+  }
+
+  return tasks
+    .filter(t => t.status === selectedTaskStatus.value)
+    .sort((a, b) => {
+      // Ordenar por prioridad y luego por fecha
+      const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+      const pA = priorityOrder[a.priority] ?? 3
+      const pB = priorityOrder[b.priority] ?? 3
+      if (pA !== pB) return pA - pB
+      if (!a.due_date && !b.due_date) return 0
+      if (!a.due_date) return 1
+      if (!b.due_date) return -1
+      return new Date(a.due_date) - new Date(b.due_date)
+    })
+})
+
+// Computed para el título del modal
+const getStatusModalTitle = computed(() => {
+  const titles = {
+    'Pendiente': 'Tareas Pendientes',
+    'En Progreso': 'Tareas En Progreso',
+    'Completada': 'Tareas Completadas',
+    'Vencidas': 'Tareas Vencidas'
+  }
+  return titles[selectedTaskStatus.value] || 'Tareas'
+})
+
+// Función para obtener clase de fila según estado de tarea
+const getTaskRowClass = (task) => {
+  if (selectedTaskStatus.value === 'Vencidas') return 'bg-red-50'
+  if (task.status === 'Completada') return 'bg-green-50'
+  return ''
+}
+
+// Función para obtener clase de prioridad
+const getPriorityBadgeClass = (priority) => {
+  const classes = {
+    'Alta': 'bg-red-100 text-red-700',
+    'Media': 'bg-yellow-100 text-yellow-700',
+    'Baja': 'bg-blue-100 text-blue-700'
+  }
+  return classes[priority] || 'bg-gray-100 text-gray-700'
+}
+
+// Función para formatear fecha de tarea
+const formatTaskDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+  const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+
+  if (taskDate.getTime() === today.getTime()) return 'Hoy'
+  if (taskDate.getTime() === tomorrow.getTime()) return 'Mañana'
+  if (taskDate < today) {
+    const diffDays = Math.ceil((today - taskDate) / (1000 * 60 * 60 * 24))
+    return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`
+  }
+
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+}
+
+// Función para obtener color de fecha
+const getDueDateColorClass = (task) => {
+  if (!task.due_date) return 'text-gray-400'
+  if (task.status === 'Completada') return 'text-gray-400'
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dueDate = new Date(task.due_date)
+
+  if (dueDate < today) return 'text-red-600 font-medium'
+  if (dueDate.getTime() === today.getTime()) return 'text-orange-600 font-medium'
+  return 'text-gray-500'
 }
 
 // Función para calcular días vencidos
