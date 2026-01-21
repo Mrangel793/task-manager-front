@@ -80,15 +80,28 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { useAuthStore, useNotificationStore } from '@/stores'
 import UserMenu from './UserMenu.vue'
 
 defineEmits(['toggle-sidebar', 'open-search', 'open-notifications'])
 
 const route = useRoute()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
+const { unreadCount } = storeToRefs(notificationStore)
+
+// Iniciar polling de notificaciones al montar el header
+onMounted(() => {
+  // Cargar conteo inicial si no hay notificaciones cargadas
+  if (notificationStore.notifications.length === 0) {
+    notificationStore.fetchUnreadCount()
+  }
+  // Iniciar polling cada 30 segundos
+  notificationStore.startPolling(30000)
+})
 
 const pageTitle = computed(() => route.meta.title || 'TaskManager')
 const pageSubtitle = computed(() => route.meta.subtitle || '')
@@ -105,6 +118,6 @@ const userRole = computed(() => {
   return roleLabels[role] || role
 })
 
-// TODO: Obtener de un store de notificaciones
-const notificationCount = computed(() => 3)
+// Contador de notificaciones desde el store
+const notificationCount = unreadCount
 </script>

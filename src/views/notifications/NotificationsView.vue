@@ -3,15 +3,19 @@
     <!-- Header con acciones -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <p class="text-sm text-gray-600">
-          {{ unreadCount }} notificaciones sin leer
+        <h1 class="text-2xl font-bold text-gray-900">Notificaciones</h1>
+        <p class="text-sm text-gray-600 mt-1">
+          {{ unreadCount }} {{ unreadCount === 1 ? 'notificación sin leer' : 'notificaciones sin leer' }}
         </p>
       </div>
       <button
         v-if="unreadCount > 0"
-        @click="markAllAsRead"
-        class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+        @click="handleMarkAllAsRead"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
       >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
         Marcar todas como leídas
       </button>
     </div>
@@ -92,33 +96,44 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/stores'
+import { useToast } from '@/composables/useToast'
 
 const notificationStore = useNotificationStore()
+const toast = useToast()
 const { groupedNotifications, unreadCount, loading } = storeToRefs(notificationStore)
 
-// Cargar notificaciones al montar
+// Cargar notificaciones al montar e iniciar polling
 onMounted(async () => {
   try {
     await notificationStore.fetchNotifications()
+    // Iniciar polling para actualizar el contador cada 30 segundos
+    notificationStore.startPolling(30000)
   } catch (error) {
     console.error('Error al cargar notificaciones:', error)
   }
 })
 
-const markAllAsRead = async () => {
+// Detener polling al desmontar
+onUnmounted(() => {
+  notificationStore.stopPolling()
+})
+
+const handleMarkAllAsRead = async () => {
   try {
     await notificationStore.markAllAsRead()
+    toast.success('Todas las notificaciones marcadas como leídas')
   } catch (error) {
+    toast.error('Error al marcar las notificaciones')
     console.error('Error al marcar todas como leídas:', error)
   }
 }
 
 const handleNotificationClick = async (notification) => {
   // Marcar como leída al hacer clic
-  if (!notification.read) {
+  if (!notification.read && !notification.is_read) {
     try {
       await notificationStore.markAsRead(notification.id)
     } catch (error) {
@@ -127,25 +142,33 @@ const handleNotificationClick = async (notification) => {
   }
 }
 
-// Mapear tipos del backend a tipos del frontend
+// Mapear tipos del backend a categorías visuales
 const mapNotificationType = (backendType) => {
   const typeMap = {
-    'task_assigned': 'task',
-    'task_reassigned': 'task',
+    'task_created': 'task_new',
+    'task_assigned': 'task_assigned',
+    'task_reassigned': 'task_reassigned',
     'task_reminder': 'reminder',
-    'task_due_soon': 'reminder',
-    'task_overdue': 'reminder',
-    'status_changed': 'status_change'
+    'task_due_soon': 'warning',
+    'task_overdue': 'danger',
+    'status_changed': 'status_change',
+    'task_completed': 'success'
   }
-  return typeMap[backendType] || 'task'
+  return typeMap[backendType] || 'info'
 }
 
 const getIconBgClass = (type) => {
   const mappedType = mapNotificationType(type)
   const classes = {
-    task: 'bg-blue-100',
+    task_new: 'bg-blue-100',
+    task_assigned: 'bg-indigo-100',
+    task_reassigned: 'bg-purple-100',
     reminder: 'bg-yellow-100',
-    status_change: 'bg-green-100'
+    warning: 'bg-orange-100',
+    danger: 'bg-red-100',
+    status_change: 'bg-green-100',
+    success: 'bg-green-100',
+    info: 'bg-gray-100'
   }
   return classes[mappedType] || 'bg-gray-100'
 }
@@ -153,9 +176,15 @@ const getIconBgClass = (type) => {
 const getIconColorClass = (type) => {
   const mappedType = mapNotificationType(type)
   const classes = {
-    task: 'text-blue-600',
+    task_new: 'text-blue-600',
+    task_assigned: 'text-indigo-600',
+    task_reassigned: 'text-purple-600',
     reminder: 'text-yellow-600',
-    status_change: 'text-green-600'
+    warning: 'text-orange-600',
+    danger: 'text-red-600',
+    status_change: 'text-green-600',
+    success: 'text-green-600',
+    info: 'text-gray-600'
   }
   return classes[mappedType] || 'text-gray-600'
 }
@@ -163,18 +192,53 @@ const getIconColorClass = (type) => {
 const getIconPath = (type) => {
   const mappedType = mapNotificationType(type)
   const paths = {
-    task: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-    reminder: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-    status_change: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+    task_new: 'M12 4v16m8-8H4', // Plus icon
+    task_assigned: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    task_reassigned: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', // Arrows
+    reminder: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', // Clock
+    warning: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', // Warning
+    danger: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', // Alert
+    status_change: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', // Check
+    success: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', // Check
+    info: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' // Info
   }
-  return paths[mappedType] || 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+  return paths[mappedType] || paths.info
 }
 
-// Obtener el link de la notificación
+// Obtener el link de la notificación basado en los datos
 const getNotificationLink = (notification) => {
+  // Si tiene tarea asociada, ir al detalle de la tarea
   if (notification.task?.id) {
     return `/tasks/${notification.task.id}`
   }
-  return notification.link || '#'
+  // Si tiene task_id en los datos adicionales
+  if (notification.data?.task_id) {
+    return `/tasks/${notification.data.task_id}`
+  }
+  // Link personalizado si existe
+  if (notification.link) {
+    return notification.link
+  }
+  // Por defecto, no navegar
+  return '/notifications'
+}
+
+// Obtener información adicional de la notificación para mostrar
+const getNotificationMeta = (notification) => {
+  const meta = []
+
+  // Prioridad de la tarea
+  if (notification.data?.priority) {
+    meta.push({ label: 'Prioridad', value: notification.data.priority })
+  } else if (notification.task?.priority) {
+    meta.push({ label: 'Prioridad', value: notification.task.priority })
+  }
+
+  // Creador/Asignador
+  if (notification.data?.creator_name) {
+    meta.push({ label: 'Por', value: notification.data.creator_name })
+  }
+
+  return meta
 }
 </script>

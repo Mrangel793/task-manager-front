@@ -7,11 +7,16 @@ export const useNotificationStore = defineStore('notification', () => {
   const notifications = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const pagination = ref(null)
+  const pollingInterval = ref(null)
+  const serverUnreadCount = ref(0) // Conteo del servidor
 
   // Getters
-  const unreadCount = computed(() =>
-    notifications.value.filter(n => !n.is_read).length
-  )
+  const unreadCount = computed(() => {
+    // Preferir el conteo del servidor si está disponible
+    if (serverUnreadCount.value > 0) return serverUnreadCount.value
+    return notifications.value.filter(n => !n.is_read).length
+  })
 
   const unreadNotifications = computed(() =>
     notifications.value.filter(n => !n.is_read)
@@ -90,15 +95,18 @@ export const useNotificationStore = defineStore('notification', () => {
   // Actions
   /**
    * Cargar todas las notificaciones
+   * @param {Object} params - Parámetros opcionales (page, per_page, unread_only)
    */
-  async function fetchNotifications() {
+  async function fetchNotifications(params = {}) {
     loading.value = true
     error.value = null
 
     try {
-      const data = await notificationService.getNotifications()
-      // data = { notifications: [...], unread_count: N }
+      const data = await notificationService.getNotifications(params)
+      // data = { notifications: [...], unread_count: N, pagination: {...} }
       notifications.value = data.notifications || []
+      serverUnreadCount.value = data.unread_count || 0
+      pagination.value = data.pagination || null
       return data.notifications
     } catch (err) {
       error.value = err.message || 'Error al cargar notificaciones'
@@ -120,8 +128,9 @@ export const useNotificationStore = defineStore('notification', () => {
 
     try {
       const data = await notificationService.getUnreadNotifications()
-      // data = { notifications: [...], unread_count: N }
+      // data = { notifications: [...], unread_count: N, pagination: {...} }
       const unreadNotifs = data.notifications || []
+      serverUnreadCount.value = data.unread_count || 0
       // Actualizar solo las no leídas manteniendo las leídas existentes
       const readNotifs = notifications.value.filter(n => n.is_read)
       notifications.value = [...unreadNotifs, ...readNotifs]
@@ -144,9 +153,14 @@ export const useNotificationStore = defineStore('notification', () => {
 
       // Actualizar en el estado local
       const notification = notifications.value.find(n => n.id === notificationId)
-      if (notification) {
+      if (notification && !notification.is_read) {
         notification.is_read = true
         notification.read = true
+        notification.read_at = new Date().toISOString()
+        // Decrementar el contador
+        if (serverUnreadCount.value > 0) {
+          serverUnreadCount.value--
+        }
       }
     } catch (err) {
       error.value = err.message || 'Error al marcar como leída'
@@ -163,10 +177,13 @@ export const useNotificationStore = defineStore('notification', () => {
       await notificationService.markAllAsRead()
 
       // Actualizar en el estado local
+      const now = new Date().toISOString()
       notifications.value.forEach(n => {
         n.is_read = true
         n.read = true
+        n.read_at = now
       })
+      serverUnreadCount.value = 0
     } catch (err) {
       error.value = err.message || 'Error al marcar todas como leídas'
       console.error('Error marking all as read:', err)
@@ -222,6 +239,41 @@ export const useNotificationStore = defineStore('notification', () => {
   function clear() {
     notifications.value = []
     error.value = null
+    serverUnreadCount.value = 0
+    pagination.value = null
+    stopPolling()
+  }
+
+  /**
+   * Iniciar polling para actualizar el contador de notificaciones
+   * @param {number} intervalMs - Intervalo en milisegundos (default: 30000 = 30 segundos)
+   */
+  function startPolling(intervalMs = 30000) {
+    // Detener polling existente si lo hay
+    stopPolling()
+
+    // Hacer una primera consulta inmediata
+    fetchUnreadCount()
+
+    // Configurar el intervalo
+    pollingInterval.value = setInterval(async () => {
+      try {
+        const count = await notificationService.getUnreadCount()
+        serverUnreadCount.value = count
+      } catch (err) {
+        console.error('Error en polling de notificaciones:', err)
+      }
+    }, intervalMs)
+  }
+
+  /**
+   * Detener polling
+   */
+  function stopPolling() {
+    if (pollingInterval.value) {
+      clearInterval(pollingInterval.value)
+      pollingInterval.value = null
+    }
   }
 
   return {
@@ -229,6 +281,7 @@ export const useNotificationStore = defineStore('notification', () => {
     notifications,
     loading,
     error,
+    pagination,
 
     // Getters
     unreadCount,
@@ -244,6 +297,8 @@ export const useNotificationStore = defineStore('notification', () => {
     deleteNotification,
     fetchUnreadCount,
     addNotification,
-    clear
+    clear,
+    startPolling,
+    stopPolling
   }
 })
