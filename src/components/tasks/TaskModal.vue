@@ -355,7 +355,15 @@ watch(() => props.task, (newTask) => {
     formData.title = newTask.title || ''
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
-    formData.due_time = newTask.due_time || ''
+    // Usar due_time_formatted si está disponible (hora en formato HH:MM)
+    // de lo contrario usar due_time solo si no es un datetime ISO completo
+    if (newTask.due_time_formatted) {
+      formData.due_time = newTask.due_time_formatted
+    } else if (newTask.due_time && !newTask.due_time.includes('T')) {
+      formData.due_time = newTask.due_time
+    } else {
+      formData.due_time = ''
+    }
     formData.priority = newTask.priority || ''
     formData.assignee_id = newTask.assignee_id || newTask.assigned_to || null
   } else {

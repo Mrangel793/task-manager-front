@@ -1,5 +1,49 @@
 import api from './api'
 
+/**
+ * Preparar los datos de fecha/hora para enviar al backend
+ * Combina due_date y due_time en un formato que el backend pueda interpretar correctamente
+ */
+const prepareDateTimeData = (taskData) => {
+  const data = { ...taskData }
+
+  // Si hay fecha y hora, combinarlas en un formato ISO sin zona horaria
+  // para que el backend las interprete como hora local
+  if (data.due_date && data.due_time) {
+    // Crear datetime local: "2026-01-23T19:50:00" (sin Z al final)
+    data.due_time = `${data.due_date}T${data.due_time}:00`
+  } else if (data.due_date && !data.due_time) {
+    // Si solo hay fecha, usar mediodía para evitar problemas de zona horaria
+    data.due_time = `${data.due_date}T12:00:00`
+  }
+
+  return data
+}
+
+/**
+ * Procesar tarea recibida del backend para normalizar fechas
+ */
+const processTaskDates = (task) => {
+  if (!task) return task
+
+  // Si due_time contiene un datetime ISO completo, extraer la fecha y hora locales
+  if (task.due_time && task.due_time.includes('T')) {
+    const dt = new Date(task.due_time)
+    // Extraer fecha en formato local YYYY-MM-DD
+    const year = dt.getFullYear()
+    const month = String(dt.getMonth() + 1).padStart(2, '0')
+    const day = String(dt.getDate()).padStart(2, '0')
+    task.due_date = `${year}-${month}-${day}`
+
+    // Extraer hora en formato HH:MM
+    const hours = String(dt.getHours()).padStart(2, '0')
+    const minutes = String(dt.getMinutes()).padStart(2, '0')
+    task.due_time_formatted = `${hours}:${minutes}`
+  }
+
+  return task
+}
+
 export const taskService = {
   /**
    * Obtener todas las tareas con filtros
@@ -7,7 +51,12 @@ export const taskService = {
   async getTasks(filters = {}) {
     const response = await api.get('v1/tasks/', { params: filters })
     // El backend envuelve la respuesta en { success, message, data }
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    // Procesar fechas de cada tarea
+    if (Array.isArray(data)) {
+      return data.map(processTaskDates)
+    }
+    return data
   },
 
   /**
@@ -16,25 +65,30 @@ export const taskService = {
   async getTask(id) {
     const response = await api.get(`v1/tasks/${id}/`)
     // El backend envuelve la respuesta en { success, message, data }
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    return processTaskDates(data)
   },
 
   /**
    * Crear una nueva tarea
    */
   async createTask(taskData) {
-    const response = await api.post('v1/tasks/', taskData)
+    const preparedData = prepareDateTimeData(taskData)
+    const response = await api.post('v1/tasks/', preparedData)
     // El backend envuelve la respuesta en { success, message, data }
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    return processTaskDates(data)
   },
 
   /**
    * Actualizar una tarea completa
    */
   async updateTask(id, taskData) {
-    const response = await api.put(`v1/tasks/${id}/`, taskData)
+    const preparedData = prepareDateTimeData(taskData)
+    const response = await api.put(`v1/tasks/${id}/`, preparedData)
     // El backend envuelve la respuesta en { success, message, data }
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+    return processTaskDates(data)
   },
 
   /**

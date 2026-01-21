@@ -335,6 +335,186 @@
         </div>
       </div>
 
+      <!-- Lista Completa de Tareas -->
+      <div class="mt-6 bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Todas las Tareas</h2>
+        </div>
+
+        <!-- Filters bar -->
+        <div class="px-6 py-4 flex flex-col sm:flex-row gap-3 border-b border-gray-100">
+          <!-- Búsqueda -->
+          <div class="flex-1">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="taskFilters.search"
+                type="text"
+                placeholder="Buscar tareas..."
+                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+            <!-- Estado -->
+            <select
+              v-model="taskFilters.status"
+              class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="En Progreso">En Progreso</option>
+              <option value="Completada">Completada</option>
+            </select>
+
+            <!-- Prioridad -->
+            <select
+              v-model="taskFilters.priority"
+              class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            >
+              <option value="all">Todas las prioridades</option>
+              <option value="Alta">Alta</option>
+              <option value="Media">Media</option>
+              <option value="Baja">Baja</option>
+            </select>
+
+            <!-- Asignado a -->
+            <select
+              v-model="taskFilters.assigneeId"
+              class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            >
+              <option value="all">Todas las personas</option>
+              <option v-for="user in allUsers" :key="user.id" :value="user.id">
+                {{ user.name }}
+              </option>
+            </select>
+
+            <!-- Botón limpiar filtros -->
+            <button
+              v-if="hasActiveTaskFilters"
+              @click="clearTaskFilters"
+              class="px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+              title="Limpiar filtros"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Task List -->
+        <div>
+          <!-- Empty state -->
+          <div v-if="filteredAllTasks.length === 0" class="text-center py-12">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">No hay tareas</h3>
+            <p class="mt-2 text-sm text-gray-500">No se encontraron tareas con los filtros aplicados</p>
+          </div>
+
+          <!-- Table Header -->
+          <div v-else>
+            <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div class="col-span-5 lg:col-span-4">Nombre de tarea</div>
+              <div class="col-span-3 lg:col-span-2">Asignado</div>
+              <div class="col-span-2 hidden sm:block">Fecha límite</div>
+              <div class="col-span-2 hidden lg:block">Prioridad</div>
+              <div class="col-span-4 sm:col-span-2">Estado</div>
+            </div>
+
+            <!-- Task Rows -->
+            <div class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+              <div
+                v-for="task in filteredAllTasks"
+                :key="task.id"
+                @click="goToTask(task.id)"
+                class="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
+                :class="{ 'bg-green-50/50': task.status === 'Completada' }"
+              >
+                <!-- Task name with checkbox -->
+                <div class="col-span-5 lg:col-span-4 flex items-center min-w-0">
+                  <button
+                    @click.stop="handleTaskStatusToggle(task)"
+                    class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-colors"
+                    :class="task.status === 'Completada'
+                      ? 'bg-green-500 border-green-500 text-white'
+                      : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
+                  >
+                    <svg v-if="task.status === 'Completada'" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div class="min-w-0 flex-1">
+                    <span
+                      class="block truncate text-sm"
+                      :class="task.status === 'Completada' ? 'text-gray-400 line-through' : 'text-gray-900 font-medium'"
+                    >
+                      {{ task.title }}
+                    </span>
+                    <span v-if="task.description" class="block text-xs text-gray-500 truncate">
+                      {{ task.description }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Assignee -->
+                <div class="col-span-3 lg:col-span-2 flex items-center">
+                  <div
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
+                    :class="getListAvatarColor(getListAssigneeName(task))"
+                  >
+                    {{ getListInitials(getListAssigneeName(task)) }}
+                  </div>
+                  <span class="text-sm text-gray-600 truncate hidden lg:block">
+                    {{ getListAssigneeName(task) }}
+                  </span>
+                </div>
+
+                <!-- Due date -->
+                <div class="col-span-2 items-center hidden sm:flex">
+                  <svg class="w-4 h-4 mr-1.5 flex-shrink-0" :class="getListDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span class="text-sm" :class="getListDueDateColor(task)">
+                    {{ formatListDueDate(task.due_date) }}
+                  </span>
+                </div>
+
+                <!-- Priority badge -->
+                <div class="col-span-2 hidden lg:block">
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
+                    :class="getListPriorityBadgeClass(task.priority)"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+
+                <!-- Status -->
+                <div class="col-span-4 sm:col-span-2" @click.stop>
+                  <select
+                    v-model="task.status"
+                    @change="handleTaskListStatusChange(task)"
+                    class="text-xs font-medium px-2 py-1 rounded border-0 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full"
+                    :class="getListStatusSelectClass(task.status)"
+                  >
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Completada">Completada</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Modal de Usuarios Recientes -->
@@ -723,6 +903,14 @@ const showTasksModal = ref(false)
 const showTasksByStatusModal = ref(false)
 const selectedTaskStatus = ref('')
 
+// Filtros para la lista de tareas
+const taskFilters = ref({
+  search: '',
+  status: 'all',
+  priority: 'all',
+  assigneeId: 'all'
+})
+
 // Métricas
 const metrics = computed(() => {
   const supervisors = allUsers.value.filter(u => normalizeRole(u.role) === 'supervisor').length
@@ -757,6 +945,14 @@ const operatorsList = computed(() => {
     .sort((a, b) => a.name.localeCompare(b.name))
 })
 
+// Función helper para parsear fechas sin problemas de zona horaria
+const parseDateString = (dateStr) => {
+  if (!dateStr) return null
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return new Date(dateStr) // Fallback
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+}
+
 // Tareas críticas (vencidas, hoy, próximos 3 días)
 const criticalTasks = computed(() => {
   const tasks = taskStore.tasks
@@ -773,19 +969,19 @@ const criticalTasks = computed(() => {
   // Tareas vencidas
   const overdue = activeTasks.filter(t => {
     if (!t.due_date) return false
-    const dueDate = new Date(t.due_date)
-    return dueDate < today
-  }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    const dueDate = parseDateString(t.due_date)
+    return dueDate && dueDate < today
+  }).sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))
 
   // Tareas que vencen hoy
   const dueToday = activeTasks.filter(t => {
     if (!t.due_date) return false
-    const dueDate = new Date(t.due_date)
-    return dueDate.getTime() === today.getTime()
+    const dueDate = parseDateString(t.due_date)
+    return dueDate && dueDate.getTime() === today.getTime()
   }).sort((a, b) => {
     // Ordenar por hora si existe
-    if (a.due_time && b.due_time) {
-      return a.due_time.localeCompare(b.due_time)
+    if (a.due_time_formatted && b.due_time_formatted) {
+      return a.due_time_formatted.localeCompare(b.due_time_formatted)
     }
     return 0
   })
@@ -793,9 +989,9 @@ const criticalTasks = computed(() => {
   // Tareas que vencen en los próximos 3 días (excluyendo hoy)
   const dueSoon = activeTasks.filter(t => {
     if (!t.due_date) return false
-    const dueDate = new Date(t.due_date)
-    return dueDate >= tomorrow && dueDate <= threeDaysFromNow
-  }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    const dueDate = parseDateString(t.due_date)
+    return dueDate && dueDate >= tomorrow && dueDate <= threeDaysFromNow
+  }).sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))
 
   return {
     overdue,
@@ -824,6 +1020,191 @@ const taskStats = computed(() => {
     pendingPercentage: total > 0 ? Math.round((pending / total) * 100) : 0
   }
 })
+
+// Tareas filtradas para la lista completa
+const filteredAllTasks = computed(() => {
+  let tasks = taskStore.tasks
+
+  // Aplicar filtros
+  if (taskFilters.value.search) {
+    const search = taskFilters.value.search.toLowerCase()
+    tasks = tasks.filter(t =>
+      t.title.toLowerCase().includes(search) ||
+      (t.description && t.description.toLowerCase().includes(search))
+    )
+  }
+
+  if (taskFilters.value.status !== 'all') {
+    tasks = tasks.filter(t => t.status === taskFilters.value.status)
+  }
+
+  if (taskFilters.value.priority !== 'all') {
+    tasks = tasks.filter(t => t.priority === taskFilters.value.priority)
+  }
+
+  if (taskFilters.value.assigneeId !== 'all') {
+    tasks = tasks.filter(t => {
+      const assigneeId = t.assignee?.id || t.assignee_id || t.assigned_to
+      return assigneeId === taskFilters.value.assigneeId
+    })
+  }
+
+  // Ordenar: primero por prioridad, luego por fecha
+  const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+  tasks = [...tasks].sort((a, b) => {
+    const pA = priorityOrder[a.priority] ?? 3
+    const pB = priorityOrder[b.priority] ?? 3
+    if (pA !== pB) return pA - pB
+
+    if (!a.due_date && !b.due_date) return 0
+    if (!a.due_date) return 1
+    if (!b.due_date) return -1
+    return parseDateString(a.due_date) - parseDateString(b.due_date)
+  })
+
+  return tasks
+})
+
+// Verificar si hay filtros activos
+const hasActiveTaskFilters = computed(() => {
+  return taskFilters.value.search !== '' ||
+    taskFilters.value.status !== 'all' ||
+    taskFilters.value.priority !== 'all' ||
+    taskFilters.value.assigneeId !== 'all'
+})
+
+// Limpiar filtros
+const clearTaskFilters = () => {
+  taskFilters.value = {
+    search: '',
+    status: 'all',
+    priority: 'all',
+    assigneeId: 'all'
+  }
+}
+
+// Helper functions para la lista de tareas
+const getListAssigneeName = (task) => {
+  const assigneeId = task.assignee?.id || task.assignee_id || task.assigned_to
+  if (!assigneeId) return 'Sin asignar'
+  const user = allUsers.value.find(u => u.id === assigneeId)
+  return user?.name || task.assignee_name || 'Usuario'
+}
+
+const getListInitials = (name) => {
+  if (!name || name === 'Sin asignar') return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+const getListAvatarColor = (name) => {
+  if (!name) return 'bg-gray-200 text-gray-600'
+  const colors = [
+    'bg-pink-100 text-pink-700',
+    'bg-purple-100 text-purple-700',
+    'bg-indigo-100 text-indigo-700',
+    'bg-blue-100 text-blue-700',
+    'bg-cyan-100 text-cyan-700',
+    'bg-teal-100 text-teal-700',
+    'bg-green-100 text-green-700',
+    'bg-yellow-100 text-yellow-700',
+    'bg-orange-100 text-orange-700',
+    'bg-red-100 text-red-700'
+  ]
+  const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length
+  return colors[index]
+}
+
+const formatListDueDate = (date) => {
+  if (!date) return 'Sin fecha'
+
+  // Parsear la fecha manualmente para evitar problemas de zona horaria
+  // El formato esperado es YYYY-MM-DD
+  const dateParts = date.split('-')
+  if (dateParts.length !== 3) {
+    // Fallback para otros formatos
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return 'Sin fecha'
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  }
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1 // Los meses en JS son 0-indexed
+  const day = parseInt(dateParts[2])
+
+  const taskDate = new Date(year, month, day)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+
+  if (taskDate.getTime() === today.getTime()) return 'Hoy'
+  if (taskDate.getTime() === tomorrow.getTime()) return 'Mañana'
+
+  return taskDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+}
+
+const getListDueDateColor = (task) => {
+  if (!task.due_date) return 'text-gray-400'
+  if (task.status === 'Completada') return 'text-gray-400'
+
+  // Parsear fecha manualmente para evitar problemas de zona horaria
+  const dateParts = task.due_date.split('-')
+  if (dateParts.length !== 3) return 'text-gray-600'
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1
+  const day = parseInt(dateParts[2])
+
+  const dueDate = new Date(year, month, day)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (dueDate < today) return 'text-red-600'
+  if (dueDate.getTime() === today.getTime()) return 'text-orange-600'
+  return 'text-gray-600'
+}
+
+const getListPriorityBadgeClass = (priority) => {
+  const classes = {
+    Alta: 'bg-red-100 text-red-700',
+    Media: 'bg-yellow-100 text-yellow-700',
+    Baja: 'bg-blue-100 text-blue-700'
+  }
+  return classes[priority] || 'bg-gray-100 text-gray-700'
+}
+
+const getListStatusSelectClass = (status) => {
+  const classes = {
+    'Pendiente': 'bg-yellow-100 text-yellow-800',
+    'En Progreso': 'bg-blue-100 text-blue-800',
+    'Completada': 'bg-green-100 text-green-800'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800'
+}
+
+// Manejar toggle de estado de tarea
+const handleTaskStatusToggle = async (task) => {
+  const newStatus = task.status === 'Completada' ? 'Pendiente' : 'Completada'
+  try {
+    await taskStore.updateTaskStatus(task.id, newStatus)
+    toast.success(newStatus === 'Completada' ? 'Tarea completada' : 'Tarea reabierta')
+  } catch (error) {
+    toast.error('Error al actualizar el estado')
+    await taskStore.fetchTasks()
+  }
+}
+
+// Manejar cambio de estado desde el select
+const handleTaskListStatusChange = async (task) => {
+  try {
+    await taskStore.updateTaskStatus(task.id, task.status)
+    toast.success('Estado actualizado correctamente')
+  } catch (error) {
+    toast.error('Error al actualizar el estado')
+    await taskStore.fetchTasks()
+  }
+}
 
 const normalizeRole = (role) => {
   if (!role) return 'user'
@@ -887,9 +1268,9 @@ const filteredTasksByStatus = computed(() => {
   if (selectedTaskStatus.value === 'Vencidas') {
     return tasks.filter(t => {
       if (!t.due_date || t.status === 'Completada') return false
-      const dueDate = new Date(t.due_date)
-      return dueDate < today
-    }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+      const dueDate = parseDateString(t.due_date)
+      return dueDate && dueDate < today
+    }).sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))
   }
 
   return tasks
@@ -903,7 +1284,7 @@ const filteredTasksByStatus = computed(() => {
       if (!a.due_date && !b.due_date) return 0
       if (!a.due_date) return 1
       if (!b.due_date) return -1
-      return new Date(a.due_date) - new Date(b.due_date)
+      return parseDateString(a.due_date) - parseDateString(b.due_date)
     })
 })
 
@@ -938,11 +1319,12 @@ const getPriorityBadgeClass = (priority) => {
 // Función para formatear fecha de tarea
 const formatTaskDate = (date) => {
   if (!date) return ''
-  const d = new Date(date)
+  const taskDate = parseDateString(date)
+  if (!taskDate) return ''
+
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-  const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
 
   if (taskDate.getTime() === today.getTime()) return 'Hoy'
   if (taskDate.getTime() === tomorrow.getTime()) return 'Mañana'
@@ -951,7 +1333,7 @@ const formatTaskDate = (date) => {
     return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`
   }
 
-  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  return taskDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 }
 
 // Función para obtener color de fecha
@@ -959,9 +1341,11 @@ const getDueDateColorClass = (task) => {
   if (!task.due_date) return 'text-gray-400'
   if (task.status === 'Completada') return 'text-gray-400'
 
+  const dueDate = parseDateString(task.due_date)
+  if (!dueDate) return 'text-gray-400'
+
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const dueDate = new Date(task.due_date)
 
   if (dueDate < today) return 'text-red-600 font-medium'
   if (dueDate.getTime() === today.getTime()) return 'text-orange-600 font-medium'
@@ -971,9 +1355,11 @@ const getDueDateColorClass = (task) => {
 // Función para calcular días vencidos
 const getDaysOverdue = (dueDate) => {
   if (!dueDate) return ''
+  const due = parseDateString(dueDate)
+  if (!due) return ''
+
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const due = new Date(dueDate)
   const diffTime = today - due
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
@@ -985,9 +1371,11 @@ const getDaysOverdue = (dueDate) => {
 // Función para mostrar fechas relativas
 const getRelativeDate = (dueDate) => {
   if (!dueDate) return ''
+  const due = parseDateString(dueDate)
+  if (!due) return ''
+
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const due = new Date(dueDate)
   const diffTime = due - today
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 

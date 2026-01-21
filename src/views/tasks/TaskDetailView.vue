@@ -331,11 +331,41 @@ const priorityLabel = computed(() => priorityBadges[task.value?.priority]?.label
 
 const formattedDate = computed(() => {
   if (!task.value) return ''
-  const date = new Date(task.value.due_date)
-  const dateStr = date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
-  if (task.value.due_time) {
-    return `${dateStr} a las ${task.value.due_time}`
+
+  // Usar due_date procesado por el servicio
+  if (!task.value.due_date) return 'Sin fecha'
+
+  // Parsear la fecha - agregar T12:00:00 para evitar problemas de zona horaria
+  const dateParts = task.value.due_date.split('-')
+  if (dateParts.length !== 3) return 'Fecha no válida'
+
+  const dateObj = new Date(
+    parseInt(dateParts[0]),
+    parseInt(dateParts[1]) - 1,
+    parseInt(dateParts[2]),
+    12, 0, 0
+  )
+
+  if (isNaN(dateObj.getTime())) return 'Fecha no válida'
+
+  const dateStr = dateObj.toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  // Usar la hora formateada si está disponible
+  const timeStr = task.value.due_time_formatted || ''
+
+  if (timeStr) {
+    // Formatear hora en formato 12h
+    const [hours, minutes] = timeStr.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'p. m.' : 'a. m.'
+    const h12 = h % 12 || 12
+    return `${dateStr} a las ${h12}:${minutes} ${ampm}`
   }
+
   return dateStr
 })
 
