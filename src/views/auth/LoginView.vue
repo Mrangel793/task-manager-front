@@ -156,16 +156,25 @@ const handleSubmit = async () => {
   submitError.value = ''
 
   try {
-    await authStore.login({
+    const loginData = await authStore.login({
       email: formData.email,
       password: formData.password
     })
 
     toast.success('¡Bienvenido de nuevo!')
 
-    // Redirigir a la página de donde venía o al dashboard
-    const redirectTo = route.query.redirect || '/tasks'
-    router.push(redirectTo)
+    // Obtener rol del usuario directamente de la respuesta
+    const userRole = (loginData.user?.role || '').toLowerCase()
+    const isAdmin = userRole === 'admin' || userRole === 'administrador'
+
+    // Redirigir según el rol del usuario
+    if (route.query.redirect) {
+      router.push(route.query.redirect)
+    } else if (isAdmin) {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/tasks')
+    }
   } catch (error) {
     submitError.value = error.message || 'Error al iniciar sesión. Por favor, verifica tus credenciales.'
     toast.error('Error al iniciar sesión')

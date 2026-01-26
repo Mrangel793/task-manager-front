@@ -178,7 +178,7 @@
           <!-- Task Rows -->
           <div class="divide-y divide-gray-100">
             <div
-              v-for="task in filteredTasks"
+              v-for="task in paginatedTasks"
               :key="task.id"
               @click="handleTaskClick(task)"
               class="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
@@ -271,6 +271,60 @@
               </svg>
               Agregar tarea...
             </div>
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <!-- Info -->
+            <div class="text-sm text-gray-700">
+              Mostrando <span class="font-medium">{{ showingFrom }}</span> a <span class="font-medium">{{ showingTo }}</span> de <span class="font-medium">{{ totalFilteredTasks }}</span> tareas
+            </div>
+
+            <!-- Controls -->
+            <nav class="flex items-center gap-1">
+              <!-- Previous -->
+              <button
+                @click="prevPage"
+                :disabled="currentPage === 1"
+                class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+                :class="currentPage === 1
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-700 hover:bg-gray-200'"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <!-- Page numbers -->
+              <template v-for="page in visiblePages" :key="page">
+                <span v-if="page === '...'" class="px-2 py-1 text-gray-500">...</span>
+                <button
+                  v-else
+                  @click="goToPage(page)"
+                  class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+                  :class="page === currentPage
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-200'"
+                >
+                  {{ page }}
+                </button>
+              </template>
+
+              <!-- Next -->
+              <button
+                @click="nextPage"
+                :disabled="currentPage === totalPages"
+                class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+                :class="currentPage === totalPages
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-700 hover:bg-gray-200'"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </nav>
           </div>
         </div>
       </div>
@@ -472,7 +526,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore, useAuthStore } from '@/stores'
 import { userService } from '@/services'
@@ -513,6 +567,10 @@ const filters = ref({
   dateFrom: null,
   dateTo: null
 })
+
+// Paginación
+const currentPage = ref(1)
+const itemsPerPage = 20
 
 const newTabData = ref({
   label: '',
@@ -573,6 +631,19 @@ const filteredTasks = computed(() => {
 
   return tasks
 })
+
+// Tareas paginadas
+const paginatedTasks = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredTasks.value.slice(start, end)
+})
+
+// Info de paginación
+const totalPages = computed(() => Math.ceil(filteredTasks.value.length / itemsPerPage))
+const totalFilteredTasks = computed(() => filteredTasks.value.length)
+const showingFrom = computed(() => totalFilteredTasks.value === 0 ? 0 : (currentPage.value - 1) * itemsPerPage + 1)
+const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage, totalFilteredTasks.value))
 
 // Función para aplicar filtros de pestaña personalizada
 const applyCustomTabFilters = (tasks, tab) => {
@@ -672,7 +743,50 @@ const clearFilters = () => {
     dateFrom: null,
     dateTo: null
   }
+  currentPage.value = 1
 }
+
+// Funciones de paginación
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+// Generar números de página visibles
+const visiblePages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total)
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total)
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total)
+    }
+  }
+
+  return pages
+})
 
 // Helper functions for Asana-style list
 const getAssigneeName = (task) => {
@@ -981,6 +1095,11 @@ const handleConfirm = () => {
     confirmModal.value.onConfirm()
   }
 }
+
+// Watchers para resetear paginación
+watch([filters, currentTab], () => {
+  currentPage.value = 1
+}, { deep: true })
 
 onMounted(async () => {
   loadCustomTabs()

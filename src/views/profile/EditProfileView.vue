@@ -113,6 +113,7 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores'
+import { authService } from '@/services'
 import { useToast } from '@/composables/useToast'
 import * as yup from 'yup'
 import BaseInput from '@/components/common/BaseInput.vue'
@@ -205,15 +206,14 @@ const handleSubmit = async () => {
   successMessage.value = ''
 
   try {
-    // TODO: Llamar al servicio de actualización de perfil
-    // await userService.updateProfile(formData)
-
-    // Actualizar el store local
-    authStore.user = {
-      ...authStore.user,
+    // Llamar al servicio de actualización de perfil
+    const updatedUser = await authService.updateProfile({
       name: formData.name,
       phone: formData.phone
-    }
+    })
+
+    // Actualizar el store con los datos del servidor
+    authStore.user = updatedUser
 
     successMessage.value = 'Perfil actualizado correctamente'
     toast.success('Perfil actualizado correctamente')
@@ -223,8 +223,9 @@ const handleSubmit = async () => {
       router.push('/profile')
     }, 1500)
   } catch (error) {
-    submitError.value = error.message || 'Error al actualizar el perfil'
-    toast.error('Error al actualizar el perfil')
+    const message = error.response?.data?.message || error.message || 'Error al actualizar el perfil'
+    submitError.value = message
+    toast.error(message)
   } finally {
     isSubmitting.value = false
   }

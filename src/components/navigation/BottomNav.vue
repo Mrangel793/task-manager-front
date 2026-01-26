@@ -41,15 +41,18 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { useAuthStore, useNotificationStore } from '@/stores'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const userRole = computed(() => authStore.userRole)
+const { unreadCount } = storeToRefs(notificationStore)
 
 // Navegación para Operario
-const operarioNav = [
+const operarioNav = computed(() => [
   {
     name: 'dashboard',
     label: 'Inicio',
@@ -67,7 +70,7 @@ const operarioNav = [
     label: 'Alertas',
     to: '/notifications',
     icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
-    badge: { count: 3 }
+    badge: { count: unreadCount.value }
   },
   {
     name: 'profile',
@@ -75,7 +78,7 @@ const operarioNav = [
     to: '/profile',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
   }
-]
+])
 
 // Navegación para Supervisor
 const supervisorNav = [
@@ -141,7 +144,7 @@ const navItems = computed(() => {
       return supervisorNav
     case 'operario':
     default:
-      return operarioNav
+      return operarioNav.value
   }
 })
 

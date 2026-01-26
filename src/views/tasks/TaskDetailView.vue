@@ -4,7 +4,7 @@
       <nav class="flex mb-6" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
           <li>
-            <router-link to="/tasks" class="text-gray-500 hover:text-gray-700">
+            <router-link :to="backUrl" class="text-gray-500 hover:text-gray-700">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
@@ -15,8 +15,8 @@
               <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
               </svg>
-              <router-link to="/tasks" class="ml-1 text-sm font-medium text-gray-500 hover:text-gray-700">
-                Tareas
+              <router-link :to="backUrl" class="ml-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                {{ backLabel }}
               </router-link>
             </div>
           </li>
@@ -261,8 +261,8 @@
       <!-- Error state -->
       <div v-else class="bg-white rounded-lg shadow-md p-6 text-center">
         <p class="text-gray-500">No se pudo cargar la tarea</p>
-        <router-link to="/tasks" class="mt-4 inline-block text-primary-600 hover:text-primary-700">
-          Volver a tareas
+        <router-link :to="backUrl" class="mt-4 inline-block text-primary-600 hover:text-primary-700">
+          Volver a {{ backLabel.toLowerCase() }}
         </router-link>
       </div>
 
@@ -328,6 +328,10 @@ const statusLabel = computed(() => statusBadges[task.value?.status]?.label || ta
 
 const priorityBadgeClass = computed(() => priorityBadges[task.value?.priority]?.class || 'bg-gray-100 text-gray-800')
 const priorityLabel = computed(() => priorityBadges[task.value?.priority]?.label || task.value?.priority || 'Desconocido')
+
+// URL de retorno según el rol del usuario
+const backUrl = computed(() => authStore.userRole === 'admin' ? '/admin/dashboard' : '/tasks')
+const backLabel = computed(() => authStore.userRole === 'admin' ? 'Dashboard' : 'Tareas')
 
 const formattedDate = computed(() => {
   if (!task.value) return ''
@@ -419,7 +423,12 @@ const handleDelete = async () => {
   try {
     await taskStore.deleteTask(task.value.id)
     toast.success('Tarea eliminada correctamente')
-    router.push('/tasks')
+    // Redirigir según el rol del usuario
+    if (authStore.userRole === 'admin') {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/tasks')
+    }
   } catch (error) {
     toast.error('Error al eliminar la tarea')
   }

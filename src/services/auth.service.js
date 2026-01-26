@@ -133,5 +133,30 @@ export const authService = {
    */
   isAuthenticated() {
     return !!localStorage.getItem('accessToken')
+  },
+
+  /**
+   * Cambiar contraseña
+   */
+  async changePassword(passwordData) {
+    const response = await api.post('v1/auth/change-password/', passwordData)
+    return response.data
+  },
+
+  /**
+   * Actualizar perfil del usuario autenticado
+   */
+  async updateProfile(profileData) {
+    const response = await api.patch('v1/auth/me/', profileData)
+
+    // El backend puede envolver la respuesta en { success, message, data }
+    const updatedUser = response.data.data || response.data
+
+    // Actualizar el usuario en localStorage
+    if (updatedUser) {
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+    }
+
+    return updatedUser
   }
 }
