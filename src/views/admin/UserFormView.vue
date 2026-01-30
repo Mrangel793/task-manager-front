@@ -60,7 +60,6 @@
           >
             <option value="">Seleccionar rol</option>
             <option value="Admin">Administrador</option>
-            <option value="Supervisor">Supervisor</option>
             <option value="Operador">Operador</option>
           </select>
           <p v-if="errors.role" class="mt-1 text-sm text-red-600">{{ errors.role }}</p>

@@ -87,7 +87,7 @@ export const getPasswordStrength = (password) => {
   }
 }
 
-// Schema de tarea
+// Schema de tarea (completo - para operarios y supervisores)
 export const taskSchema = yup.object({
   title: yup
     .string()
@@ -128,6 +128,42 @@ export const taskSchema = yup.object({
       // El backend manejará el caso cuando es null para operarios
       return value !== undefined && value !== ''
     })
+})
+
+// Schema de tarea simplificado para admins (solo título requerido)
+export const taskSchemaAdmin = yup.object({
+  title: yup
+    .string()
+    .required('El título es requerido')
+    .min(3, 'El título debe tener al menos 3 caracteres')
+    .max(255, 'El título no puede tener más de 255 caracteres'),
+  description: yup
+    .string()
+    .nullable()
+    .max(1000, 'La descripción no puede tener más de 1000 caracteres'),
+  due_date: yup
+    .string()
+    .nullable()
+    .transform((value) => (value === '' ? null : value))
+    .test('is-future', 'La fecha debe ser hoy o futura', function(value) {
+      // Si está vacío o null, es válido (campo opcional para admin)
+      if (!value) return true
+      const inputDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return inputDate >= today
+    }),
+  due_time: yup
+    .string()
+    .nullable()
+    .transform((value) => (value === '' ? null : value)),
+  priority: yup
+    .string()
+    .nullable()
+    .transform((value) => (value === '' ? null : value)),
+  assignee_id: yup
+    .mixed()
+    .nullable()
 })
 
 // Validar un solo campo

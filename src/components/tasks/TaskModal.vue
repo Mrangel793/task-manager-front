@@ -79,63 +79,27 @@
             <p v-else-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
           </div>
 
-          <!-- Fecha y Hora -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Fecha <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="formData.due_date"
-                type="date"
-                class="input-field w-full"
-                :class="{ 'border-red-500': errors.due_date }"
-                :disabled="isSubmitting"
-                :min="todayDate"
-                @blur="validateSingleField('due_date')"
-              />
-              <p v-if="errors.due_date" class="mt-1 text-sm text-red-600">{{ errors.due_date }}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Hora
-              </label>
-              <input
-                v-model="formData.due_time"
-                type="time"
-                class="input-field w-full"
-                :class="{ 'border-red-500': errors.due_time }"
-                :disabled="isSubmitting"
-                @blur="validateSingleField('due_time')"
-              />
-              <p v-if="errors.due_time" class="mt-1 text-sm text-red-600">{{ errors.due_time }}</p>
-            </div>
-          </div>
-
-          <!-- Prioridad -->
+          <!-- Fecha -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              Prioridad <span class="text-red-500">*</span>
+              Fecha <span v-if="authStore.userRole !== 'admin'" class="text-red-500">*</span>
             </label>
-            <select
-              v-model="formData.priority"
+            <input
+              v-model="formData.due_date"
+              type="date"
               class="input-field w-full"
-              :class="{ 'border-red-500': errors.priority }"
+              :class="{ 'border-red-500': errors.due_date }"
               :disabled="isSubmitting"
-              @blur="validateSingleField('priority')"
-            >
-              <option value="">Seleccionar prioridad</option>
-              <option value="Baja">Baja</option>
-              <option value="Media">Media</option>
-              <option value="Alta">Alta</option>
-            </select>
-            <p v-if="errors.priority" class="mt-1 text-sm text-red-600">{{ errors.priority }}</p>
+              :min="todayDate"
+              @blur="validateSingleField('due_date')"
+            />
+            <p v-if="errors.due_date" class="mt-1 text-sm text-red-600">{{ errors.due_date }}</p>
           </div>
 
           <!-- Asignar a (solo Admin/Supervisor) -->
           <div v-if="canAssign">
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              Asignar a <span class="text-red-500">*</span>
+              Asignar a <span v-if="authStore.userRole !== 'admin'" class="text-red-500">*</span>
             </label>
             <select
               v-model="formData.assignee_id"
@@ -192,7 +156,7 @@
 <script setup>
 import { reactive, ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores'
-import { taskSchema } from '@/utils/validationSchemas'
+import { taskSchema, taskSchemaAdmin } from '@/utils/validationSchemas'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import VoiceInputButton from '@/components/common/VoiceInputButton.vue'
@@ -220,8 +184,7 @@ const formData = reactive({
   title: '',
   description: '',
   due_date: '',
-  due_time: '',
-  priority: '',
+  priority: 'Media', // Valor por defecto
   assignee_id: null
 })
 
@@ -229,8 +192,6 @@ const errors = reactive({
   title: '',
   description: '',
   due_date: '',
-  due_time: '',
-  priority: '',
   assignee_id: ''
 })
 
@@ -254,6 +215,13 @@ const voiceStatusClass = computed(() => {
 const canAssign = computed(() => {
   const role = authStore.userRole
   return role === 'admin' || role === 'supervisor'
+})
+
+// Schema de validación según el rol
+const validationSchema = computed(() => {
+  const role = authStore.userRole
+  console.log('Rol del usuario:', role, '| Usando schema admin:', role === 'admin')
+  return role === 'admin' ? taskSchemaAdmin : taskSchema
 })
 
 // Fecha mínima para el selector de fecha (hoy)
@@ -288,7 +256,7 @@ const clearErrors = () => {
 
 const validateSingleField = async (fieldName) => {
   try {
-    await taskSchema.validateAt(fieldName, formData)
+    await validationSchema.value.validateAt(fieldName, formData)
     errors[fieldName] = ''
   } catch (error) {
     errors[fieldName] = error.message
@@ -299,7 +267,7 @@ const validateForm = async () => {
   clearErrors()
 
   try {
-    await taskSchema.validate(formData, { abortEarly: false })
+    await validationSchema.value.validate(formData, { abortEarly: false })
     return true
   } catch (validationErrors) {
     validationErrors.inner.forEach(error => {
@@ -343,8 +311,7 @@ const resetForm = () => {
   formData.title = ''
   formData.description = ''
   formData.due_date = ''
-  formData.due_time = ''
-  formData.priority = ''
+  formData.priority = 'Media'
   formData.assignee_id = null
   clearErrors()
 }
@@ -355,16 +322,7 @@ watch(() => props.task, (newTask) => {
     formData.title = newTask.title || ''
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
-    // Usar due_time_formatted si está disponible (hora en formato HH:MM)
-    // de lo contrario usar due_time solo si no es un datetime ISO completo
-    if (newTask.due_time_formatted) {
-      formData.due_time = newTask.due_time_formatted
-    } else if (newTask.due_time && !newTask.due_time.includes('T')) {
-      formData.due_time = newTask.due_time
-    } else {
-      formData.due_time = ''
-    }
-    formData.priority = newTask.priority || ''
+    formData.priority = newTask.priority || 'Media'
     formData.assignee_id = newTask.assignee_id || newTask.assigned_to || null
   } else {
     resetForm()

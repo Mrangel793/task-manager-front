@@ -8,8 +8,8 @@
     </div>
 
       <!-- Tabs -->
-      <div class="mb-6 border-b border-gray-200">
-        <nav class="-mb-px flex space-x-4 items-center">
+      <div class="mb-6 border-b border-gray-200 overflow-x-auto">
+        <nav class="-mb-px flex space-x-4 items-center min-w-max">
           <!-- Pestaña Todas (fija) -->
           <button
             @click="currentTab = 'all'"
@@ -45,8 +45,10 @@
               <!-- Badge de usuarios si hay seleccionados -->
               <span
                 v-if="getTabAssigneeNames(tab).length > 0"
-                :class="currentTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-blue-50 text-blue-600'"
-                class="py-0.5 px-2 rounded-full text-xs font-medium flex items-center gap-1"
+                @click.stop="openTabMembersModal(tab)"
+                :class="currentTab === tab.id ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                class="py-0.5 px-2 rounded-full text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                title="Ver integrantes"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -97,11 +99,11 @@
         </div>
 
         <!-- Filtros -->
-        <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2">
           <!-- Estado -->
           <select
             v-model="filters.status"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            class="w-full lg:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-sm"
           >
             <option value="all">Todos los estados</option>
             <option value="Pendiente">Pendiente</option>
@@ -113,7 +115,7 @@
           <!-- Prioridad -->
           <select
             v-model="filters.priority"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            class="w-full lg:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-sm"
           >
             <option value="all">Todas las prioridades</option>
             <option value="Alta">Alta</option>
@@ -124,7 +126,7 @@
           <!-- Asignado a -->
           <select
             v-model="filters.assigneeId"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            class="w-full lg:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-sm"
           >
             <option value="all">Todas las personas</option>
             <option v-for="user in users" :key="user.id" :value="user.id">
@@ -136,12 +138,13 @@
           <button
             v-if="hasActiveFilters"
             @click="clearFilters"
-            class="px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+            class="w-full sm:w-auto px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-2"
             title="Limpiar filtros"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
+            <span class="sm:hidden">Limpiar</span>
           </button>
         </div>
       </div>
@@ -167,12 +170,13 @@
         <!-- Tasks List (Asana style) -->
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Table Header -->
-          <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-5 lg:col-span-4">Nombre de tarea</div>
-            <div class="col-span-3 lg:col-span-2">Asignado</div>
-            <div class="col-span-2 hidden sm:block">Fecha límite</div>
+          <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <div class="col-span-5 sm:col-span-4 lg:col-span-3">Tarea</div>
+            <div class="col-span-2 hidden sm:block lg:col-span-2">Asignado</div>
+            <div class="col-span-2 hidden md:block">Fecha</div>
             <div class="col-span-2 hidden lg:block">Prioridad</div>
             <div class="col-span-4 sm:col-span-2">Estado</div>
+            <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
           </div>
 
           <!-- Task Rows -->
@@ -181,14 +185,14 @@
               v-for="task in paginatedTasks"
               :key="task.id"
               @click="handleTaskClick(task)"
-              class="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
+              class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
               :class="{ 'bg-green-50/50': task.status === 'Completada' }"
             >
               <!-- Task name with checkbox -->
-              <div class="col-span-5 lg:col-span-4 flex items-center min-w-0">
+              <div class="col-span-5 sm:col-span-4 lg:col-span-3 flex items-center min-w-0">
                 <button
                   @click.stop="handleRequestComplete({ task })"
-                  class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-colors"
+                  class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 flex items-center justify-center transition-colors"
                   :class="task.status === 'Completada'
                     ? 'bg-green-500 border-green-500 text-white'
                     : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
@@ -204,14 +208,11 @@
                   >
                     {{ task.title }}
                   </span>
-                  <span v-if="task.description" class="block text-xs text-gray-500 truncate">
-                    {{ task.description }}
-                  </span>
                 </div>
               </div>
 
-              <!-- Assignee -->
-              <div class="col-span-3 lg:col-span-2 flex items-center">
+              <!-- Assignee (hidden on mobile) -->
+              <div class="col-span-2 hidden sm:flex items-center lg:col-span-2">
                 <div
                   class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
                   :class="getAvatarColor(getAssigneeName(task))"
@@ -223,8 +224,8 @@
                 </span>
               </div>
 
-              <!-- Due date -->
-              <div class="col-span-2 items-center hidden sm:flex">
+              <!-- Due date (hidden on mobile and sm) -->
+              <div class="col-span-2 items-center hidden md:flex">
                 <svg class="w-4 h-4 mr-1.5 flex-shrink-0" :class="getDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -233,7 +234,7 @@
                 </span>
               </div>
 
-              <!-- Priority badge -->
+              <!-- Priority badge (hidden on mobile) -->
               <div class="col-span-2 hidden lg:block">
                 <span
                   class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
@@ -248,13 +249,37 @@
                 <select
                   v-model="task.status"
                   @change="handleStatusChangeSelect(task)"
-                  class="text-xs font-medium px-2 py-1 rounded border-0 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full"
+                  class="text-xs font-medium px-1 sm:px-2 py-1 rounded border-0 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full"
                   :class="getStatusSelectClass(task.status)"
                 >
                   <option value="Pendiente">Pendiente</option>
                   <option value="En Progreso">En Progreso</option>
                   <option value="Completada">Completada</option>
                 </select>
+              </div>
+
+              <!-- Actions -->
+              <div class="col-span-3 sm:col-span-2 lg:col-span-1 flex items-center justify-end sm:justify-center gap-0.5 sm:gap-1" @click.stop>
+                <!-- Edit button -->
+                <button
+                  @click="handleEditTask(task)"
+                  class="p-1 sm:p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Editar tarea"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <!-- Delete button -->
+                <button
+                  @click="handleDeleteTask(task)"
+                  class="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Eliminar tarea"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -418,13 +443,22 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">
                 Nombre de la pestaña <span class="text-red-500">*</span>
               </label>
-              <input
-                v-model="newTabData.label"
-                type="text"
-                placeholder="Ej: Equipo Marketing"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
-              />
+              <div class="relative">
+                <input
+                  v-model="newTabData.label"
+                  type="text"
+                  placeholder="Ej: Equipo Marketing"
+                  class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+                <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
+                  <VoiceInputButton
+                    v-model="newTabData.label"
+                    :show-status="false"
+                    size="small"
+                  />
+                </div>
+              </div>
             </div>
 
             <!-- Estado -->
@@ -441,22 +475,6 @@
                 <option value="En Progreso">En Progreso</option>
                 <option value="Completada">Completada</option>
                 <option value="Cancelada">Cancelada</option>
-              </select>
-            </div>
-
-            <!-- Prioridad -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Filtrar por prioridad
-              </label>
-              <select
-                v-model="newTabData.priority"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">Todas las prioridades</option>
-                <option value="Baja">Baja</option>
-                <option value="Media">Media</option>
-                <option value="Alta">Alta</option>
               </select>
             </div>
 
@@ -522,6 +540,65 @@
       @confirm="handleConfirmComplete"
       @cancel="handleCancelComplete"
     />
+
+    <!-- Modal de integrantes de pestaña -->
+    <div v-if="isTabMembersModalOpen" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeTabMembersModal">
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">Integrantes</h3>
+              <p class="text-sm text-gray-500">{{ selectedTabForMembers?.label }}</p>
+            </div>
+            <button @click="closeTabMembersModal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Lista de integrantes -->
+          <div class="p-6">
+            <div class="space-y-3">
+              <div
+                v-for="user in getTabAssigneeUsers(selectedTabForMembers)"
+                :key="user.id"
+                class="flex items-center p-3 bg-gray-50 rounded-lg"
+              >
+                <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
+                  <span class="text-sm font-semibold text-primary-600">{{ getMemberInitials(user.name) }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ user.name }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ user.email || user.role || 'Sin información' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div v-if="getTabAssigneeUsers(selectedTabForMembers).length === 0" class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <p class="mt-2 text-sm text-gray-500">No hay integrantes asignados</p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <button
+              @click="closeTabMembersModal"
+              class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -529,10 +606,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore, useAuthStore } from '@/stores'
-import { userService } from '@/services'
+import { userService, tabService } from '@/services'
 import { useToast } from '@/composables/useToast'
 import TaskModal from '@/components/tasks/TaskModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import VoiceInputButton from '@/components/common/VoiceInputButton.vue'
 
 const router = useRouter()
 const taskStore = useTaskStore()
@@ -578,6 +656,10 @@ const newTabData = ref({
   priority: 'all',
   assigneeIds: []
 })
+
+// Variables para modal de integrantes de pestaña
+const isTabMembersModalOpen = ref(false)
+const selectedTabForMembers = ref(null)
 
 const tasksCount = computed(() => taskStore.tasksCount)
 
@@ -697,6 +779,43 @@ const getTabAssigneeNames = (tab) => {
       return user ? user.name : null
     })
     .filter(name => name !== null)
+}
+
+// Obtener usuarios completos asignados a la pestaña
+const getTabAssigneeUsers = (tab) => {
+  if (!tab?.filters?.assigneeIds || tab.filters.assigneeIds.length === 0) {
+    // Soporte legacy para assigneeId único
+    if (tab?.filters?.assigneeId && tab.filters.assigneeId !== 'all') {
+      const user = users.value.find(u => u.id === tab.filters.assigneeId)
+      return user ? [user] : []
+    }
+    return []
+  }
+
+  return tab.filters.assigneeIds
+    .map(id => users.value.find(u => u.id === id))
+    .filter(user => user !== undefined)
+}
+
+// Abrir modal de integrantes de pestaña
+const openTabMembersModal = (tab) => {
+  selectedTabForMembers.value = tab
+  isTabMembersModalOpen.value = true
+}
+
+// Cerrar modal de integrantes de pestaña
+const closeTabMembersModal = () => {
+  isTabMembersModalOpen.value = false
+  selectedTabForMembers.value = null
+}
+
+// Obtener iniciales del usuario
+const getMemberInitials = (name) => {
+  if (!name) return 'U'
+  const names = name.trim().split(' ')
+  return names.length === 1
+    ? names[0].substring(0, 2).toUpperCase()
+    : (names[0][0] + names[names.length - 1][0]).toUpperCase()
 }
 
 // Obtener tooltip con información de la pestaña
@@ -917,6 +1036,29 @@ const handleTaskClick = (task) => {
   router.push(`/tasks/${task.id}`)
 }
 
+const handleEditTask = (task) => {
+  selectedTaskForEdit.value = task
+  isModalOpen.value = true
+}
+
+const handleDeleteTask = (task) => {
+  confirmModal.value = {
+    isOpen: true,
+    title: 'Eliminar tarea',
+    message: `¿Estás seguro de eliminar la tarea "${task.title}"? Esta acción no se puede deshacer.`,
+    onConfirm: async () => {
+      try {
+        await taskStore.deleteTask(task.id)
+        toast.success('Tarea eliminada correctamente')
+        closeConfirmModal()
+      } catch (error) {
+        toast.error('Error al eliminar la tarea')
+        closeConfirmModal()
+      }
+    }
+  }
+}
+
 const handleStatusChange = async ({ task, newStatus }) => {
   try {
     await taskStore.updateTaskStatus(task.id, newStatus)
@@ -998,22 +1140,16 @@ const handleSaveTask = async (taskData) => {
 }
 
 // Funciones para pestañas personalizadas
-const loadCustomTabs = () => {
+const loadCustomTabs = async () => {
   try {
-    const saved = localStorage.getItem('customTabs')
-    if (saved) {
-      customTabs.value = JSON.parse(saved)
-    }
+    const tabs = await tabService.getTabs('tasks')
+    customTabs.value = tabs.map(tab => ({
+      id: tab.id,
+      label: tab.label,
+      filters: tab.filters || {}
+    }))
   } catch (error) {
     console.error('Error al cargar pestañas:', error)
-  }
-}
-
-const saveCustomTabs = () => {
-  try {
-    localStorage.setItem('customTabs', JSON.stringify(customTabs.value))
-  } catch (error) {
-    console.error('Error al guardar pestañas:', error)
   }
 }
 
@@ -1031,32 +1167,40 @@ const closeTabModal = () => {
   isTabModalOpen.value = false
 }
 
-const handleCreateTab = () => {
+const handleCreateTab = async () => {
   if (!newTabData.value.label.trim()) {
     toast.error('El nombre de la pestaña es requerido')
     return
   }
 
-  createCustomTab(newTabData.value)
+  await createCustomTab(newTabData.value)
 }
 
-const createCustomTab = (tabData) => {
-  const newTab = {
-    id: `tab_${Date.now()}`,
-    label: tabData.label,
-    filters: {
-      status: tabData.status || 'all',
-      priority: tabData.priority || 'all',
-      assigneeIds: tabData.assigneeIds || []
-    }
+const createCustomTab = async (tabData) => {
+  try {
+    const newTab = await tabService.createTab({
+      label: tabData.label,
+      view_type: 'tasks',
+      filters: {
+        status: tabData.status || 'all',
+        priority: tabData.priority || 'all',
+        assigneeIds: tabData.assigneeIds || []
+      }
+    })
+
+    customTabs.value.push({
+      id: newTab.id,
+      label: newTab.label,
+      filters: newTab.filters || {}
+    })
+
+    closeTabModal()
+    toast.success('Pestaña creada correctamente')
+    currentTab.value = newTab.id
+  } catch (error) {
+    console.error('Error al crear pestaña:', error)
+    toast.error('Error al crear la pestaña')
   }
-
-  customTabs.value.push(newTab)
-  saveCustomTabs()
-  closeTabModal()
-  toast.success('Pestaña creada correctamente')
-
-  currentTab.value = newTab.id
 }
 
 const deleteCustomTab = (tabId) => {
@@ -1067,16 +1211,22 @@ const deleteCustomTab = (tabId) => {
     isOpen: true,
     title: 'Eliminar pestaña',
     message: `¿Estás seguro de eliminar la pestaña "${tab.label}"? Esta acción no se puede deshacer.`,
-    onConfirm: () => {
-      customTabs.value = customTabs.value.filter(t => t.id !== tabId)
-      saveCustomTabs()
+    onConfirm: async () => {
+      try {
+        await tabService.deleteTab(tabId)
+        customTabs.value = customTabs.value.filter(t => t.id !== tabId)
 
-      if (currentTab.value === tabId) {
-        currentTab.value = 'all'
+        if (currentTab.value === tabId) {
+          currentTab.value = 'all'
+        }
+
+        toast.success('Pestaña eliminada')
+        closeConfirmModal()
+      } catch (error) {
+        console.error('Error al eliminar pestaña:', error)
+        toast.error('Error al eliminar la pestaña')
+        closeConfirmModal()
       }
-
-      toast.success('Pestaña eliminada')
-      closeConfirmModal()
     }
   }
 }
@@ -1102,7 +1252,7 @@ watch([filters, currentTab], () => {
 }, { deep: true })
 
 onMounted(async () => {
-  loadCustomTabs()
+  await loadCustomTabs()
   await Promise.all([
     loadTasks(),
     loadUsers()

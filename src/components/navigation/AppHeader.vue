@@ -47,8 +47,8 @@
       </button>
 
       <!-- Notifications -->
-      <button
-        @click="$emit('open-notifications')"
+      <router-link
+        to="/notifications"
         class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
         >
           {{ notificationCount > 9 ? '9+' : notificationCount }}
         </span>
-      </button>
+      </router-link>
 
       <!-- User info (desktop) -->
       <div class="hidden lg:flex items-center text-sm">
@@ -85,7 +85,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore, useNotificationStore } from '@/stores'
 import UserMenu from './UserMenu.vue'
 
-defineEmits(['toggle-sidebar', 'open-search', 'open-notifications'])
+defineEmits(['toggle-sidebar', 'open-search'])
 
 const route = useRoute()
 const authStore = useAuthStore()
