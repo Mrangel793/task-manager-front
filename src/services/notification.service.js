@@ -101,6 +101,34 @@ const notificationService = {
   },
 
   /**
+   * Eliminar todas las notificaciones
+   * @returns {Promise} Resultado de la operación
+   */
+  async deleteAllNotifications() {
+    try {
+      const response = await api.delete('v1/notifications/')
+      return response.data
+    } catch (error) {
+      console.error('Error al eliminar todas las notificaciones:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Eliminar solo las notificaciones leídas
+   * @returns {Promise} Resultado de la operación
+   */
+  async deleteReadNotifications() {
+    try {
+      const response = await api.delete('v1/notifications/read')
+      return response.data
+    } catch (error) {
+      console.error('Error al eliminar notificaciones leídas:', error)
+      throw error
+    }
+  },
+
+  /**
    * Obtener el conteo de notificaciones no leídas
    * Útil para el badge en el sidebar
    * @returns {Promise<number>} Cantidad de notificaciones no leídas

@@ -4,9 +4,6 @@
     class="bg-white rounded-lg shadow-md p-5 cursor-pointer transition-all hover:shadow-lg relative overflow-hidden"
     @click="handleClick"
   >
-    <!-- Borde de color según prioridad -->
-    <div :class="priorityBorderClass" class="absolute top-0 left-0 w-1 h-full rounded-l-lg"></div>
-
     <!-- Badge de urgencia (solo si es urgente o vencida) -->
     <div
       v-if="urgency.level === 'overdue' || urgency.level === 'urgent'"
@@ -70,19 +67,6 @@
         </div>
       </div>
 
-      <!-- Prioridad -->
-      <div class="flex items-start gap-2 text-sm">
-        <div class="flex items-center gap-1.5 min-w-[110px]">
-          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-          </svg>
-          <span class="text-gray-500 font-medium">Prioridad:</span>
-        </div>
-        <span :class="priorityConfig.badgeClass" class="px-2.5 py-0.5 rounded-full text-xs font-semibold">
-          {{ priorityConfig.label }}
-        </span>
-      </div>
-
       <!-- Estado -->
       <div class="flex items-start gap-2 text-sm">
         <div class="flex items-center gap-1.5 min-w-[110px]">
@@ -118,7 +102,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores'
-import { getTaskUrgency, getPriorityConfig } from '@/utils/taskHelpers'
+import { getTaskUrgency } from '@/utils/taskHelpers'
 import TaskStatusDropdown from './TaskStatusDropdown.vue'
 import Avatar from '@/components/common/Avatar.vue'
 
@@ -139,11 +123,6 @@ const authStore = useAuthStore()
 
 // Calcular urgencia
 const urgency = computed(() => getTaskUrgency(props.task))
-
-// Configuración de prioridad
-const priorityConfig = computed(() => getPriorityConfig(props.task.priority))
-
-const priorityBorderClass = computed(() => priorityConfig.value.bgClass)
 
 const formattedDate = computed(() => {
   if (!props.task.due_date) return 'Sin fecha límite'

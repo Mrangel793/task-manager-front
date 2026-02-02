@@ -47,17 +47,6 @@
           </select>
         </div>
 
-        <!-- Priority -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-          <select v-model="filters.priority" class="input-field w-full">
-            <option value="all">Todas</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-          </select>
-        </div>
-
         <!-- Assignee -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Asignado a</label>
@@ -164,10 +153,9 @@
       <div v-else class="bg-white rounded-lg shadow overflow-hidden">
         <!-- Table Header -->
         <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-          <div class="col-span-4">Nombre de tarea</div>
-          <div class="col-span-2">Asignado</div>
+          <div class="col-span-5">Nombre de tarea</div>
+          <div class="col-span-3">Asignado</div>
           <div class="col-span-2">Fecha límite</div>
-          <div class="col-span-2">Prioridad</div>
           <div class="col-span-2">Estado</div>
         </div>
 
@@ -181,7 +169,7 @@
             :class="{ 'bg-green-50/50': task.status === 'Completada' }"
           >
             <!-- Task name with checkbox -->
-            <div class="col-span-4 flex items-center min-w-0">
+            <div class="col-span-5 flex items-center min-w-0">
               <button
                 @click.stop="toggleTaskComplete(task)"
                 class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-colors"
@@ -207,7 +195,7 @@
             </div>
 
             <!-- Assignee -->
-            <div class="col-span-2 flex items-center">
+            <div class="col-span-3 flex items-center">
               <div
                 class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
                 :class="getAvatarColor(getAssigneeName(task))"
@@ -226,16 +214,6 @@
               </svg>
               <span class="text-sm" :class="getDueDateColor(task)">
                 {{ formatDueDate(task.due_date) }}
-              </span>
-            </div>
-
-            <!-- Priority badge -->
-            <div class="col-span-2">
-              <span
-                class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
-                :class="getPriorityBadgeClass(task.priority)"
-              >
-                {{ task.priority }}
               </span>
             </div>
 
@@ -314,7 +292,6 @@ const showAdvancedFilters = ref(false)
 const filters = ref({
   search: '',
   status: 'all',
-  priority: 'all',
   assignee: 'all',
   dateFrom: null,
   dateTo: null,
@@ -353,11 +330,6 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(t => t.status === filters.value.status)
   }
 
-  // Filtrar por prioridad
-  if (filters.value.priority !== 'all') {
-    tasks = tasks.filter(t => t.priority === filters.value.priority)
-  }
-
   // Filtrar por asignado
   if (filters.value.assignee !== 'all') {
     tasks = tasks.filter(t =>
@@ -385,17 +357,11 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(t => !t.due_date || new Date(t.due_date) >= today || t.status === 'Completada')
   }
 
-  // Ordenar: primero por prioridad, luego por fecha
-  const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+  // Ordenar por fecha de creación (más recientes primero)
   tasks = [...tasks].sort((a, b) => {
-    const pA = priorityOrder[a.priority] ?? 3
-    const pB = priorityOrder[b.priority] ?? 3
-    if (pA !== pB) return pA - pB
-
-    if (!a.due_date && !b.due_date) return 0
-    if (!a.due_date) return 1
-    if (!b.due_date) return -1
-    return new Date(a.due_date) - new Date(b.due_date)
+    const dateA = a.created_at ? new Date(a.created_at) : 0
+    const dateB = b.created_at ? new Date(b.created_at) : 0
+    return dateB - dateA
   })
 
   return tasks
@@ -489,15 +455,6 @@ const toggleTaskComplete = async (task) => {
   }
 }
 
-const getPriorityBadgeClass = (priority) => {
-  const classes = {
-    Alta: 'bg-red-100 text-red-700',
-    Media: 'bg-yellow-100 text-yellow-700',
-    Baja: 'bg-blue-100 text-blue-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
-}
-
 const formatDueDate = (date) => {
   if (!date) return 'Sin fecha'
   const d = new Date(date)
@@ -533,7 +490,6 @@ const clearFilters = () => {
   filters.value = {
     search: '',
     status: 'all',
-    priority: 'all',
     assignee: 'all',
     dateFrom: null,
     dateTo: null,

@@ -48,9 +48,6 @@
                 <span :class="statusBadgeClass" class="text-sm font-medium px-3 py-1 rounded-full">
                   {{ statusLabel }}
                 </span>
-                <span :class="priorityBadgeClass" class="text-sm font-medium px-3 py-1 rounded-full">
-                  {{ priorityLabel }}
-                </span>
               </div>
             </div>
 
@@ -317,17 +314,8 @@ const statusBadges = {
   'Cancelada': { label: 'Cancelada', class: 'bg-red-100 text-red-800' }
 }
 
-const priorityBadges = {
-  'Baja': { label: 'Prioridad Baja', class: 'bg-green-100 text-green-800' },
-  'Media': { label: 'Prioridad Media', class: 'bg-yellow-100 text-yellow-800' },
-  'Alta': { label: 'Prioridad Alta', class: 'bg-red-100 text-red-800' }
-}
-
 const statusBadgeClass = computed(() => statusBadges[task.value?.status]?.class || 'bg-gray-100 text-gray-800')
 const statusLabel = computed(() => statusBadges[task.value?.status]?.label || task.value?.status || 'Desconocido')
-
-const priorityBadgeClass = computed(() => priorityBadges[task.value?.priority]?.class || 'bg-gray-100 text-gray-800')
-const priorityLabel = computed(() => priorityBadges[task.value?.priority]?.label || task.value?.priority || 'Desconocido')
 
 // URL de retorno según el rol del usuario
 const backUrl = computed(() => authStore.userRole === 'admin' ? '/admin/dashboard' : '/tasks')

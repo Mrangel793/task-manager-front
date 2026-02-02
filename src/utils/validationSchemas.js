@@ -116,10 +116,6 @@ export const taskSchema = yup.object({
       // Validar formato HH:MM (input type="time" siempre devuelve este formato)
       return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value)
     }),
-  priority: yup
-    .string()
-    .required('La prioridad es requerida')
-    .oneOf(['Baja', 'Media', 'Alta'], 'La prioridad debe ser: Baja, Media o Alta'),
   assignee_id: yup
     .mixed()
     .nullable()
@@ -154,10 +150,6 @@ export const taskSchemaAdmin = yup.object({
       return inputDate >= today
     }),
   due_time: yup
-    .string()
-    .nullable()
-    .transform((value) => (value === '' ? null : value)),
-  priority: yup
     .string()
     .nullable()
     .transform((value) => (value === '' ? null : value)),

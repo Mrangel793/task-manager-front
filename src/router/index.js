@@ -229,16 +229,28 @@ router.beforeEach((to, from, next) => {
 
   // Verificar autenticación
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Ruta requiere autenticación y el usuario no está autenticado
     next({ name: 'login', query: { redirect: to.fullPath } })
     return
   }
 
   // Verificar si es ruta de invitado
   if (to.meta.requiresGuest && isAuthenticated) {
-    // Ruta es solo para invitados y el usuario está autenticado
     next({ name: 'tasks' })
     return
+  }
+
+  // Redirigir dashboard raíz según rol (evita montar componente intermedio)
+  if (to.name === 'dashboard' && isAuthenticated) {
+    if (userRole === 'admin') {
+      next({ name: 'admin-dashboard' })
+      return
+    } else if (userRole === 'supervisor') {
+      next({ path: '/team/overview' })
+      return
+    } else {
+      next({ name: 'tasks' })
+      return
+    }
   }
 
   // Verificar roles requeridos
@@ -248,7 +260,6 @@ router.beforeEach((to, from, next) => {
       : [to.meta.requiresRole]
 
     if (!requiredRoles.includes(userRole)) {
-      // Usuario no tiene el rol requerido, redirigir a tareas
       next({ name: 'tasks' })
       return
     }

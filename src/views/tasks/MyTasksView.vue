@@ -70,10 +70,9 @@
         <!-- Table Header -->
         <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
           <div class="col-span-5">Nombre de tarea</div>
-          <div class="col-span-2">Asignado</div>
+          <div class="col-span-3">Asignado</div>
           <div class="col-span-2">Fecha límite</div>
-          <div class="col-span-2">Prioridad</div>
-          <div class="col-span-1">Estado</div>
+          <div class="col-span-2">Estado</div>
         </div>
 
         <!-- Task Rows -->
@@ -107,7 +106,7 @@
             </div>
 
             <!-- Assignee -->
-            <div class="col-span-2 flex items-center">
+            <div class="col-span-3 flex items-center">
               <div
                 class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2"
                 :class="getAvatarColor(task.assignee_name || getAssigneeName(task))"
@@ -129,18 +128,8 @@
               </span>
             </div>
 
-            <!-- Priority badge -->
-            <div class="col-span-2">
-              <span
-                class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
-                :class="getPriorityBadgeClass(task.priority)"
-              >
-                {{ task.priority }}
-              </span>
-            </div>
-
             <!-- Status badge -->
-            <div class="col-span-1">
+            <div class="col-span-2">
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                 :class="getStatusBadgeClass(task.status)"
@@ -249,17 +238,11 @@ const filteredMyTasks = computed(() => {
     })
   }
 
-  // Ordenar: primero por prioridad, luego por fecha
-  const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+  // Ordenar por fecha de creación (más recientes primero)
   tasks = [...tasks].sort((a, b) => {
-    const pA = priorityOrder[a.priority] ?? 3
-    const pB = priorityOrder[b.priority] ?? 3
-    if (pA !== pB) return pA - pB
-
-    if (!a.due_date && !b.due_date) return 0
-    if (!a.due_date) return 1
-    if (!b.due_date) return -1
-    return new Date(a.due_date) - new Date(b.due_date)
+    const dateA = a.created_at ? new Date(a.created_at) : 0
+    const dateB = b.created_at ? new Date(b.created_at) : 0
+    return dateB - dateA
   })
 
   return tasks
@@ -384,15 +367,6 @@ const getDueDateColor = (task) => {
   if (dueDate < today) return 'text-red-600'
   if (dueDate.getTime() === today.getTime()) return 'text-orange-600'
   return 'text-gray-600'
-}
-
-const getPriorityBadgeClass = (priority) => {
-  const classes = {
-    'Alta': 'bg-red-100 text-red-700',
-    'Media': 'bg-yellow-100 text-yellow-700',
-    'Baja': 'bg-blue-100 text-blue-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
 }
 
 const getStatusBadgeClass = (status) => {

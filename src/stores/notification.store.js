@@ -201,11 +201,49 @@ export const useNotificationStore = defineStore('notification', () => {
       // Eliminar del estado local
       const index = notifications.value.findIndex(n => n.id === notificationId)
       if (index !== -1) {
+        const wasUnread = !notifications.value[index].is_read
         notifications.value.splice(index, 1)
+        // Actualizar contador si era no leída
+        if (wasUnread && serverUnreadCount.value > 0) {
+          serverUnreadCount.value--
+        }
       }
     } catch (err) {
       error.value = err.message || 'Error al eliminar notificación'
       console.error('Error deleting notification:', err)
+      throw err
+    }
+  }
+
+  /**
+   * Eliminar todas las notificaciones
+   */
+  async function deleteAllNotifications() {
+    try {
+      await notificationService.deleteAllNotifications()
+
+      // Limpiar estado local
+      notifications.value = []
+      serverUnreadCount.value = 0
+    } catch (err) {
+      error.value = err.message || 'Error al eliminar todas las notificaciones'
+      console.error('Error deleting all notifications:', err)
+      throw err
+    }
+  }
+
+  /**
+   * Eliminar solo las notificaciones leídas
+   */
+  async function deleteReadNotifications() {
+    try {
+      await notificationService.deleteReadNotifications()
+
+      // Mantener solo las no leídas
+      notifications.value = notifications.value.filter(n => !n.is_read)
+    } catch (err) {
+      error.value = err.message || 'Error al eliminar notificaciones leídas'
+      console.error('Error deleting read notifications:', err)
       throw err
     }
   }
@@ -295,6 +333,8 @@ export const useNotificationStore = defineStore('notification', () => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    deleteAllNotifications,
+    deleteReadNotifications,
     fetchUnreadCount,
     addNotification,
     clear,

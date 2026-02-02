@@ -43,17 +43,6 @@
         </select>
       </div>
 
-      <!-- Prioridad -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-        <select v-model="localFilters.priority" class="input-field w-full" @change="applyFilters">
-          <option value="all">Todas</option>
-          <option value="Alta">Alta</option>
-          <option value="Media">Media</option>
-          <option value="Baja">Baja</option>
-        </select>
-      </div>
-
       <!-- Asignado a -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Asignado a</label>
@@ -106,7 +95,6 @@ const props = defineProps({
     default: () => ({
       search: '',
       status: 'all',
-      priority: 'all',
       assigneeId: 'all',
       dateFrom: null,
       dateTo: null
@@ -140,7 +128,6 @@ const applyFilters = () => {
 const clearFilters = () => {
   localFilters.search = ''
   localFilters.status = 'all'
-  localFilters.priority = 'all'
   localFilters.assigneeId = 'all'
   localFilters.dateFrom = null
   localFilters.dateTo = null

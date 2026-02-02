@@ -10,13 +10,6 @@ export const TASK_STATUSES = {
   CANCELLED: 'Cancelada'
 }
 
-// Prioridades de tareas
-export const TASK_PRIORITIES = {
-  BAJA: 'Baja',
-  MEDIA: 'Media',
-  ALTA: 'Alta'
-}
-
 // Configuración de estados
 export const STATUS_CONFIG = {
   [TASK_STATUSES.PENDING]: {
@@ -57,34 +50,6 @@ export const STATUS_CONFIG = {
   }
 }
 
-// Configuración de prioridades
-export const PRIORITY_CONFIG = {
-  [TASK_PRIORITIES.BAJA]: {
-    label: 'Baja',
-    color: 'blue',
-    bgClass: 'bg-blue-500',
-    textClass: 'text-blue-700',
-    badgeClass: 'bg-blue-100 text-blue-800',
-    order: 1
-  },
-  [TASK_PRIORITIES.MEDIA]: {
-    label: 'Media',
-    color: 'yellow',
-    bgClass: 'bg-yellow-500',
-    textClass: 'text-yellow-700',
-    badgeClass: 'bg-yellow-100 text-yellow-800',
-    order: 2
-  },
-  [TASK_PRIORITIES.ALTA]: {
-    label: 'Alta',
-    color: 'red',
-    bgClass: 'bg-red-500',
-    textClass: 'text-red-700',
-    badgeClass: 'bg-red-100 text-red-800',
-    order: 3
-  }
-}
-
 // Niveles de urgencia
 export const URGENCY_LEVELS = {
   OVERDUE: 'overdue',
@@ -98,13 +63,6 @@ export const URGENCY_LEVELS = {
  */
 export function getStatusConfig(status) {
   return STATUS_CONFIG[status] || STATUS_CONFIG[TASK_STATUSES.PENDING]
-}
-
-/**
- * Obtiene la configuración de una prioridad
- */
-export function getPriorityConfig(priority) {
-  return PRIORITY_CONFIG[priority] || PRIORITY_CONFIG[TASK_PRIORITIES.MEDIA]
 }
 
 /**
@@ -284,7 +242,7 @@ export function canChangeToStatus(task, newStatus, userRole, userId) {
 }
 
 /**
- * Ordena tareas por urgencia y prioridad
+ * Ordena tareas por urgencia y fecha
  */
 export function sortTasksByUrgency(tasks) {
   return [...tasks].sort((a, b) => {
@@ -302,11 +260,11 @@ export function sortTasksByUrgency(tasks) {
     const urgencyDiff = urgencyOrder[urgencyB.level] - urgencyOrder[urgencyA.level]
     if (urgencyDiff !== 0) return urgencyDiff
 
-    // Si tienen la misma urgencia, ordenar por prioridad
-    const priorityA = getPriorityConfig(a.priority)
-    const priorityB = getPriorityConfig(b.priority)
-
-    return priorityB.order - priorityA.order
+    // Si tienen la misma urgencia, ordenar por fecha
+    if (!a.due_date && !b.due_date) return 0
+    if (!a.due_date) return 1
+    if (!b.due_date) return -1
+    return new Date(a.due_date) - new Date(b.due_date)
   })
 }
 

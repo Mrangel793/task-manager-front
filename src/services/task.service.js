@@ -73,7 +73,12 @@ export const taskService = {
    * Crear una nueva tarea
    */
   async createTask(taskData) {
-    const preparedData = prepareDateTimeData(taskData)
+    // Limpiar campos vacíos/nulos para que el backend aplique sus valores por defecto
+    // (ej: due_time = fecha actual + 3 días cuando no se envía fecha)
+    const cleanedData = Object.fromEntries(
+      Object.entries(taskData).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+    )
+    const preparedData = prepareDateTimeData(cleanedData)
     const response = await api.post('v1/tasks/', preparedData)
     // El backend envuelve la respuesta en { success, message, data }
     const data = response.data.data || response.data
@@ -117,13 +122,6 @@ export const taskService = {
    */
   async getTasksByStatus(status) {
     return this.getTasks({ status })
-  },
-
-  /**
-   * Obtener tareas por prioridad
-   */
-  async getTasksByPriority(priority) {
-    return this.getTasks({ priority })
   },
 
   /**

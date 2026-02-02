@@ -112,17 +112,6 @@
             <option value="Cancelada">Cancelada</option>
           </select>
 
-          <!-- Prioridad -->
-          <select
-            v-model="filters.priority"
-            class="w-full lg:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-sm"
-          >
-            <option value="all">Todas las prioridades</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-          </select>
-
           <!-- Asignado a -->
           <select
             v-model="filters.assigneeId"
@@ -171,11 +160,11 @@
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Table Header -->
           <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-5 sm:col-span-4 lg:col-span-3">Tarea</div>
-            <div class="col-span-2 hidden sm:block lg:col-span-2">Asignado</div>
-            <div class="col-span-2 hidden md:block">Fecha</div>
-            <div class="col-span-2 hidden lg:block">Prioridad</div>
-            <div class="col-span-4 sm:col-span-2">Estado</div>
+            <div class="col-span-5 lg:col-span-5">Tarea</div>
+            <div class="col-span-4 sm:hidden">Asignado</div>
+            <div class="col-span-2 hidden sm:block lg:col-span-3">Asignado</div>
+            <div class="col-span-1 hidden md:block">Fecha</div>
+            <div class="hidden sm:block sm:col-span-2">Estado</div>
             <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
           </div>
 
@@ -189,10 +178,10 @@
               :class="{ 'bg-green-50/50': task.status === 'Completada' }"
             >
               <!-- Task name with checkbox -->
-              <div class="col-span-5 sm:col-span-4 lg:col-span-3 flex items-center min-w-0">
+              <div class="col-span-5 sm:col-span-5 lg:col-span-5 flex items-start min-w-0">
                 <button
                   @click.stop="handleRequestComplete({ task })"
-                  class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 flex items-center justify-center transition-colors"
+                  class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 mt-0.5 flex items-center justify-center transition-colors"
                   :class="task.status === 'Completada'
                     ? 'bg-green-500 border-green-500 text-white'
                     : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
@@ -203,7 +192,7 @@
                 </button>
                 <div class="min-w-0 flex-1">
                   <span
-                    class="block truncate text-sm"
+                    class="block text-sm break-words"
                     :class="task.status === 'Completada' ? 'text-gray-400 line-through' : 'text-gray-900 font-medium'"
                   >
                     {{ task.title }}
@@ -211,22 +200,43 @@
                 </div>
               </div>
 
-              <!-- Assignee (hidden on mobile) -->
-              <div class="col-span-2 hidden sm:flex items-center lg:col-span-2">
+              <!-- Assignee mobile -->
+              <div class="col-span-4 sm:hidden" @click.stop>
+                <select
+                  :value="getTaskAssigneeId(task)"
+                  @change="handleAssigneeChange(task, $event.target.value)"
+                  class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full bg-white truncate"
+                >
+                  <option value="" disabled>Sin asignar</option>
+                  <option v-for="user in users" :key="user.id" :value="user.id">
+                    {{ user.name }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Assignee desktop -->
+              <div class="col-span-2 hidden sm:flex items-center lg:col-span-3" @click.stop>
                 <div
                   class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
                   :class="getAvatarColor(getAssigneeName(task))"
                 >
                   {{ getInitials(getAssigneeName(task)) }}
                 </div>
-                <span class="text-sm text-gray-600 truncate hidden lg:block">
-                  {{ getAssigneeName(task) }}
-                </span>
+                <select
+                  :value="getTaskAssigneeId(task)"
+                  @change="handleAssigneeChange(task, $event.target.value)"
+                  class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-1 min-w-0 bg-white truncate"
+                >
+                  <option value="" disabled>Sin asignar</option>
+                  <option v-for="user in users" :key="user.id" :value="user.id">
+                    {{ user.name }}
+                  </option>
+                </select>
               </div>
 
               <!-- Due date (hidden on mobile and sm) -->
-              <div class="col-span-2 items-center hidden md:flex">
-                <svg class="w-4 h-4 mr-1.5 flex-shrink-0" :class="getDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="col-span-1 items-center hidden md:flex">
+                <svg class="w-4 h-4 mr-1 flex-shrink-0" :class="getDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span class="text-sm" :class="getDueDateColor(task)">
@@ -234,18 +244,8 @@
                 </span>
               </div>
 
-              <!-- Priority badge (hidden on mobile) -->
-              <div class="col-span-2 hidden lg:block">
-                <span
-                  class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
-                  :class="getPriorityBadgeClass(task.priority)"
-                >
-                  {{ task.priority }}
-                </span>
-              </div>
-
-              <!-- Status -->
-              <div class="col-span-4 sm:col-span-2" @click.stop>
+              <!-- Status (hidden on mobile) -->
+              <div class="hidden sm:block sm:col-span-2" @click.stop>
                 <select
                   v-model="task.status"
                   @change="handleStatusChangeSelect(task)"
@@ -461,23 +461,6 @@
               </div>
             </div>
 
-            <!-- Estado -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Filtrar por estado
-              </label>
-              <select
-                v-model="newTabData.status"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En Progreso">En Progreso</option>
-                <option value="Completada">Completada</option>
-                <option value="Cancelada">Cancelada</option>
-              </select>
-            </div>
-
             <!-- Usuarios asignados (múltiples) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -640,7 +623,6 @@ const completeConfirmDialog = ref({
 const filters = ref({
   search: '',
   status: 'all',
-  priority: 'all',
   assigneeId: 'all',
   dateFrom: null,
   dateTo: null
@@ -653,7 +635,6 @@ const itemsPerPage = 20
 const newTabData = ref({
   label: '',
   status: 'all',
-  priority: 'all',
   assigneeIds: []
 })
 
@@ -687,10 +668,6 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(t => t.status === filters.value.status)
   }
 
-  if (filters.value.priority !== 'all') {
-    tasks = tasks.filter(t => t.priority === filters.value.priority)
-  }
-
   if (filters.value.assigneeId !== 'all') {
     tasks = tasks.filter(t => {
       const assigneeId = t.assignee?.id || t.assignee_id || t.assigned_to
@@ -698,17 +675,11 @@ const filteredTasks = computed(() => {
     })
   }
 
-  // Ordenar: primero por prioridad, luego por fecha
-  const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+  // Ordenar por fecha de creación (más recientes primero)
   tasks = [...tasks].sort((a, b) => {
-    const pA = priorityOrder[a.priority] ?? 3
-    const pB = priorityOrder[b.priority] ?? 3
-    if (pA !== pB) return pA - pB
-
-    if (!a.due_date && !b.due_date) return 0
-    if (!a.due_date) return 1
-    if (!b.due_date) return -1
-    return new Date(a.due_date) - new Date(b.due_date)
+    const dateA = a.created_at ? new Date(a.created_at) : 0
+    const dateB = b.created_at ? new Date(b.created_at) : 0
+    return dateB - dateA
   })
 
   return tasks
@@ -733,10 +704,6 @@ const applyCustomTabFilters = (tasks, tab) => {
 
   if (tab.filters.status && tab.filters.status !== 'all') {
     filtered = filtered.filter(t => t.status === tab.filters.status)
-  }
-
-  if (tab.filters.priority && tab.filters.priority !== 'all') {
-    filtered = filtered.filter(t => t.priority === tab.filters.priority)
   }
 
   // Soporte para múltiples usuarios
@@ -833,11 +800,6 @@ const getTabTooltip = (tab) => {
     parts.push(`Estado: ${tab.filters.status}`)
   }
 
-  // Prioridad
-  if (tab.filters.priority && tab.filters.priority !== 'all') {
-    parts.push(`Prioridad: ${tab.filters.priority}`)
-  }
-
   return parts.length > 0 ? parts.join(' | ') : 'Sin filtros adicionales'
 }
 
@@ -849,7 +811,6 @@ const canCreateTask = computed(() => {
 const hasActiveFilters = computed(() => {
   return filters.value.search !== '' ||
     filters.value.status !== 'all' ||
-    filters.value.priority !== 'all' ||
     filters.value.assigneeId !== 'all'
 })
 
@@ -857,7 +818,6 @@ const clearFilters = () => {
   filters.value = {
     search: '',
     status: 'all',
-    priority: 'all',
     assigneeId: 'all',
     dateFrom: null,
     dateTo: null
@@ -908,8 +868,12 @@ const visiblePages = computed(() => {
 })
 
 // Helper functions for Asana-style list
+const getTaskAssigneeId = (task) => {
+  return task.assignee?.id || task.assignee_id || task.assigned_to || ''
+}
+
 const getAssigneeName = (task) => {
-  const assigneeId = task.assignee?.id || task.assignee_id || task.assigned_to
+  const assigneeId = getTaskAssigneeId(task)
   if (!assigneeId) return 'Sin asignar'
   const user = users.value.find(u => u.id === assigneeId)
   return user?.name || task.assignee_name || 'Usuario'
@@ -965,15 +929,6 @@ const getDueDateColor = (task) => {
   if (dueDate < today) return 'text-red-600'
   if (dueDate.getTime() === today.getTime()) return 'text-orange-600'
   return 'text-gray-600'
-}
-
-const getPriorityBadgeClass = (priority) => {
-  const classes = {
-    Alta: 'bg-red-100 text-red-700',
-    Media: 'bg-yellow-100 text-yellow-700',
-    Baja: 'bg-blue-100 text-blue-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
 }
 
 const getStatusSelectClass = (status) => {
@@ -1068,6 +1023,27 @@ const handleStatusChange = async ({ task, newStatus }) => {
   }
 }
 
+const handleAssigneeChange = async (task, newAssigneeId) => {
+  const previousAssigneeId = getTaskAssigneeId(task)
+  try {
+    // Actualizar todos los campos posibles para feedback inmediato
+    task.assignee_id = newAssigneeId
+    task.assigned_to = newAssigneeId
+    if (task.assignee) task.assignee = { ...task.assignee, id: newAssigneeId }
+    else task.assignee = { id: newAssigneeId }
+    await taskStore.reassignTask(task.id, newAssigneeId)
+    // Refrescar tareas para sincronizar con backend
+    await taskStore.fetchTasks()
+    toast.success('Operador asignado correctamente')
+  } catch (error) {
+    // Revertir en caso de error
+    task.assignee_id = previousAssigneeId
+    task.assigned_to = previousAssigneeId
+    if (task.assignee) task.assignee.id = previousAssigneeId
+    toast.error('Error al asignar operador')
+  }
+}
+
 const handleStatusChangeSelect = async (task) => {
   try {
     await taskStore.updateTaskStatus(task.id, task.status)
@@ -1157,7 +1133,6 @@ const openTabModal = () => {
   newTabData.value = {
     label: '',
     status: 'all',
-    priority: 'all',
     assigneeIds: []
   }
   isTabModalOpen.value = true
@@ -1183,7 +1158,6 @@ const createCustomTab = async (tabData) => {
       view_type: 'tasks',
       filters: {
         status: tabData.status || 'all',
-        priority: tabData.priority || 'all',
         assigneeIds: tabData.assigneeIds || []
       }
     })

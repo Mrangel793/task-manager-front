@@ -184,7 +184,6 @@ const formData = reactive({
   title: '',
   description: '',
   due_date: '',
-  priority: 'Media', // Valor por defecto
   assignee_id: null
 })
 
@@ -311,7 +310,6 @@ const resetForm = () => {
   formData.title = ''
   formData.description = ''
   formData.due_date = ''
-  formData.priority = 'Media'
   formData.assignee_id = null
   clearErrors()
 }
@@ -322,7 +320,6 @@ watch(() => props.task, (newTask) => {
     formData.title = newTask.title || ''
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
-    formData.priority = newTask.priority || 'Media'
     formData.assignee_id = newTask.assignee_id || newTask.assigned_to || null
   } else {
     resetForm()

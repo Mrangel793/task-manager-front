@@ -12,104 +12,12 @@
     </div>
 
     <div v-else>
-      <!-- Estadísticas de Tareas por Estado -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <!-- Tareas Pendientes -->
-        <div
-          @click="openTasksByStatusModal('Pendiente')"
-          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 bg-orange-100 rounded-lg p-3 group-hover:bg-orange-200 transition-colors">
-                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Pendientes</p>
-                <p class="text-2xl font-bold text-gray-900">{{ taskStats.pending }}</p>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
+      <!-- Layout principal: Tareas a la izquierda, Cards de estado a la derecha -->
+      <div class="flex flex-col lg:flex-row gap-6">
 
-        <!-- Tareas En Progreso -->
-        <div
-          @click="openTasksByStatusModal('En Progreso')"
-          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3 group-hover:bg-blue-200 transition-colors">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">En Progreso</p>
-                <p class="text-2xl font-bold text-gray-900">{{ taskStats.inProgress }}</p>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- Tareas Completadas -->
-        <div
-          @click="openTasksByStatusModal('Completada')"
-          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 bg-green-100 rounded-lg p-3 group-hover:bg-green-200 transition-colors">
-                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Completadas</p>
-                <p class="text-2xl font-bold text-gray-900">{{ taskStats.completed }}</p>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- Tareas Vencidas -->
-        <div
-          @click="openTasksByStatusModal('Vencidas')"
-          class="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow group"
-          :class="{ 'ring-2 ring-red-300': taskStats.overdue > 0 }"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 bg-red-100 rounded-lg p-3 group-hover:bg-red-200 transition-colors">
-                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Vencidas</p>
-                <p class="text-2xl font-bold" :class="taskStats.overdue > 0 ? 'text-red-600' : 'text-gray-900'">{{ taskStats.overdue }}</p>
-              </div>
-            </div>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lista Completa de Tareas -->
-      <div class="mt-6 bg-white rounded-lg shadow">
+        <!-- Izquierda: Lista Completa de Tareas -->
+        <div class="flex-1 min-w-0 order-2 lg:order-1">
+          <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
           <h2 class="text-lg font-semibold text-gray-900">Todas las Tareas</h2>
         </div>
@@ -229,17 +137,6 @@
               <option value="Completada">Completada</option>
             </select>
 
-            <!-- Prioridad -->
-            <select
-              v-model="taskFilters.priority"
-              class="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-            >
-              <option value="all">Todas las prioridades</option>
-              <option value="Alta">Alta</option>
-              <option value="Media">Media</option>
-              <option value="Baja">Baja</option>
-            </select>
-
             <!-- Asignado a -->
             <select
               v-model="taskFilters.assigneeId"
@@ -268,22 +165,76 @@
         <!-- Task List -->
         <div>
           <!-- Empty state -->
-          <div v-if="filteredAllTasks.length === 0" class="text-center py-12">
+          <div v-if="filteredAllTasks.length === 0 && !isQuickCreateMode" class="text-center py-12">
             <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h3 class="mt-4 text-lg font-medium text-gray-900">No hay tareas</h3>
-            <p class="mt-2 text-sm text-gray-500">No se encontraron tareas con los filtros aplicados</p>
+            <p class="mt-2 text-sm text-gray-500">Presiona el botón + para crear tu primera tarea</p>
+          </div>
+
+          <!-- Quick create cuando está vacío -->
+          <div v-else-if="filteredAllTasks.length === 0 && isQuickCreateMode" class="bg-white rounded-lg border border-gray-200">
+            <div class="px-3 sm:px-4 py-4">
+              <!-- Input con voz -->
+              <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex-shrink-0 w-5 h-5">
+                  <svg v-if="isCreatingTask" class="w-5 h-5 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                </div>
+                <div class="flex-1 relative">
+                  <input
+                    ref="quickCreateInput"
+                    v-model="newTaskTitle"
+                    type="text"
+                    :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
+                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    :disabled="isCreatingTask"
+                    @keyup.enter="handleQuickCreateTask"
+                    @keyup.escape="cancelQuickCreate"
+                    autofocus
+                  />
+                  <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
+                    <VoiceInputButton
+                      v-model="newTaskTitle"
+                      :disabled="isCreatingTask"
+                      :show-status="false"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- Botones -->
+              <div class="flex items-center justify-end gap-2 mt-2 pl-7">
+                <button
+                  @click="cancelQuickCreate"
+                  :disabled="isCreatingTask"
+                  class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  @click="handleQuickCreateTask"
+                  :disabled="!newTaskTitle.trim() || isCreatingTask"
+                  class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  {{ isCreatingTask ? 'Creando...' : 'Crear' }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Table Header -->
           <div v-else>
             <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <div class="col-span-5 sm:col-span-4 lg:col-span-3">Tarea</div>
-              <div class="col-span-2 hidden sm:block lg:col-span-2">Asignado</div>
-              <div class="col-span-2 hidden md:block">Fecha</div>
-              <div class="col-span-2 hidden lg:block">Prioridad</div>
-              <div class="col-span-4 sm:col-span-2">Estado</div>
+              <div class="col-span-5 lg:col-span-5">Tarea</div>
+              <div class="col-span-4 sm:hidden">Asignado</div>
+              <div class="col-span-2 hidden sm:block lg:col-span-3">Asignado</div>
+              <div class="col-span-1 hidden md:block">Fecha</div>
+              <div class="hidden sm:block sm:col-span-2">Estado</div>
               <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
             </div>
 
@@ -297,10 +248,10 @@
                 :class="{ 'bg-green-50/50': task.status === 'Completada' }"
               >
                 <!-- Task name with checkbox -->
-                <div class="col-span-5 sm:col-span-4 lg:col-span-3 flex items-center min-w-0">
+                <div class="col-span-5 sm:col-span-5 lg:col-span-5 flex items-start min-w-0">
                   <button
                     @click.stop="handleTaskStatusToggle(task)"
-                    class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 flex items-center justify-center transition-colors"
+                    class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 mt-0.5 flex items-center justify-center transition-colors"
                     :class="task.status === 'Completada'
                       ? 'bg-green-500 border-green-500 text-white'
                       : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
@@ -311,7 +262,7 @@
                   </button>
                   <div class="min-w-0 flex-1">
                     <span
-                      class="block truncate text-sm"
+                      class="block text-sm break-words"
                       :class="task.status === 'Completada' ? 'text-gray-400 line-through' : 'text-gray-900 font-medium'"
                     >
                       {{ task.title }}
@@ -319,22 +270,43 @@
                   </div>
                 </div>
 
-                <!-- Assignee (hidden on mobile) -->
-                <div class="col-span-2 hidden sm:flex items-center lg:col-span-2">
+                <!-- Assignee mobile -->
+                <div class="col-span-4 sm:hidden" @click.stop>
+                  <select
+                    :value="getTaskAssigneeId(task)"
+                    @change="handleAssigneeChange(task, $event.target.value)"
+                    class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full bg-white truncate"
+                  >
+                    <option value="" disabled>Sin asignar</option>
+                    <option v-for="user in allUsers" :key="user.id" :value="user.id">
+                      {{ user.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Assignee desktop -->
+                <div class="col-span-2 hidden sm:flex items-center lg:col-span-3" @click.stop>
                   <div
                     class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
                     :class="getListAvatarColor(getListAssigneeName(task))"
                   >
                     {{ getListInitials(getListAssigneeName(task)) }}
                   </div>
-                  <span class="text-sm text-gray-600 truncate hidden lg:block">
-                    {{ getListAssigneeName(task) }}
-                  </span>
+                  <select
+                    :value="getTaskAssigneeId(task)"
+                    @change="handleAssigneeChange(task, $event.target.value)"
+                    class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-1 min-w-0 bg-white truncate"
+                  >
+                    <option value="" disabled>Sin asignar</option>
+                    <option v-for="user in allUsers" :key="user.id" :value="user.id">
+                      {{ user.name }}
+                    </option>
+                  </select>
                 </div>
 
                 <!-- Due date (hidden on mobile and sm) -->
-                <div class="col-span-2 items-center hidden md:flex">
-                  <svg class="w-4 h-4 mr-1.5 flex-shrink-0" :class="getListDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="col-span-1 items-center hidden md:flex">
+                  <svg class="w-4 h-4 mr-1 flex-shrink-0" :class="getListDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <span class="text-sm" :class="getListDueDateColor(task)">
@@ -342,18 +314,8 @@
                   </span>
                 </div>
 
-                <!-- Priority badge (hidden on mobile) -->
-                <div class="col-span-2 hidden lg:block">
-                  <span
-                    class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium"
-                    :class="getListPriorityBadgeClass(task.priority)"
-                  >
-                    {{ task.priority }}
-                  </span>
-                </div>
-
-                <!-- Status -->
-                <div class="col-span-4 sm:col-span-2" @click.stop>
+                <!-- Status (hidden on mobile) -->
+                <div class="hidden sm:block sm:col-span-2" @click.stop>
                   <select
                     v-model="task.status"
                     @change="handleTaskListStatusChange(task)"
@@ -389,6 +351,61 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <!-- Fila de creación rápida -->
+            <div
+              v-if="isQuickCreateMode"
+              class="px-3 sm:px-4 py-3 border-t border-gray-200 bg-blue-50"
+            >
+              <!-- Input con voz -->
+              <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex-shrink-0 w-5 h-5">
+                  <svg v-if="isCreatingTask" class="w-5 h-5 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                </div>
+                <div class="flex-1 relative">
+                  <input
+                    ref="quickCreateInput"
+                    v-model="newTaskTitle"
+                    type="text"
+                    :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
+                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    :disabled="isCreatingTask"
+                    @keyup.enter="handleQuickCreateTask"
+                    @keyup.escape="cancelQuickCreate"
+                    autofocus
+                  />
+                  <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
+                    <VoiceInputButton
+                      v-model="newTaskTitle"
+                      :disabled="isCreatingTask"
+                      :show-status="false"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- Botones -->
+              <div class="flex items-center justify-end gap-2 mt-2 pl-7">
+                <button
+                  @click="cancelQuickCreate"
+                  :disabled="isCreatingTask"
+                  class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  @click="handleQuickCreateTask"
+                  :disabled="!newTaskTitle.trim() || isCreatingTask"
+                  class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  {{ isCreatingTask ? 'Creando...' : 'Crear' }}
+                </button>
               </div>
             </div>
 
@@ -447,186 +464,109 @@
             </div>
 
           </div>
-        </div>
-      </div>
-
-      <!-- Tareas Críticas y Estadísticas -->
-      <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Tareas que requieren atención -->
-        <div class="bg-white rounded-lg shadow">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Tareas que Requieren Atención</h2>
-          </div>
-          <div class="p-6">
-            <div v-if="criticalTasks.overdue.length === 0 && criticalTasks.dueToday.length === 0 && criticalTasks.dueSoon.length === 0" class="text-center py-12 text-gray-500">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="font-medium">¡Todo al día!</p>
-              <p class="text-sm mt-1">No hay tareas urgentes en este momento</p>
-            </div>
-            <div v-else class="space-y-3">
-              <!-- Tareas vencidas -->
-              <div v-if="criticalTasks.overdue.length > 0">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span class="text-sm font-semibold text-gray-900">Vencidas</span>
-                    <span class="text-xs text-gray-500">({{ criticalTasks.overdue.length }})</span>
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div
-                    v-for="task in criticalTasks.overdue.slice(0, 3)"
-                    :key="task.id"
-                    @click="goTo(`/tasks/${task.id}`)"
-                    class="flex items-center justify-between p-2 bg-red-50 rounded hover:bg-red-100 cursor-pointer group"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
-                      <p class="text-xs text-gray-600">{{ getListAssigneeName(task) }}</p>
-                    </div>
-                    <span class="text-xs font-medium text-red-600 ml-2">{{ getDaysOverdue(task.due_date) }}</span>
-                  </div>
-                  <button
-                    v-if="criticalTasks.overdue.length > 3"
-                    @click="goTo('/team/tasks')"
-                    class="text-xs text-red-600 hover:text-red-700 font-medium w-full text-center py-1"
-                  >
-                    Ver {{ criticalTasks.overdue.length - 3 }} más →
-                  </button>
-                </div>
-              </div>
-
-              <!-- Tareas de hoy -->
-              <div v-if="criticalTasks.dueToday.length > 0">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span class="text-sm font-semibold text-gray-900">Vencen Hoy</span>
-                    <span class="text-xs text-gray-500">({{ criticalTasks.dueToday.length }})</span>
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div
-                    v-for="task in criticalTasks.dueToday.slice(0, 3)"
-                    :key="task.id"
-                    @click="goTo(`/tasks/${task.id}`)"
-                    class="flex items-center justify-between p-2 bg-orange-50 rounded hover:bg-orange-100 cursor-pointer group"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
-                      <p class="text-xs text-gray-600">{{ getListAssigneeName(task) }}</p>
-                    </div>
-                    <span v-if="task.due_time" class="text-xs font-medium text-orange-600 ml-2">{{ task.due_time }}</span>
-                  </div>
-                  <button
-                    v-if="criticalTasks.dueToday.length > 3"
-                    @click="goTo('/team/tasks')"
-                    class="text-xs text-orange-600 hover:text-orange-700 font-medium w-full text-center py-1"
-                  >
-                    Ver {{ criticalTasks.dueToday.length - 3 }} más →
-                  </button>
-                </div>
-              </div>
-
-              <!-- Tareas próximas -->
-              <div v-if="criticalTasks.dueSoon.length > 0">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span class="text-sm font-semibold text-gray-900">Próximos 3 Días</span>
-                    <span class="text-xs text-gray-500">({{ criticalTasks.dueSoon.length }})</span>
-                  </div>
-                </div>
-                <div class="space-y-1">
-                  <div
-                    v-for="task in criticalTasks.dueSoon.slice(0, 3)"
-                    :key="task.id"
-                    @click="goTo(`/tasks/${task.id}`)"
-                    class="flex items-center justify-between p-2 bg-yellow-50 rounded hover:bg-yellow-100 cursor-pointer group"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
-                      <p class="text-xs text-gray-600">{{ getListAssigneeName(task) }}</p>
-                    </div>
-                    <span class="text-xs font-medium text-yellow-600 ml-2">{{ getRelativeDate(task.due_date) }}</span>
-                  </div>
-                  <button
-                    v-if="criticalTasks.dueSoon.length > 3"
-                    @click="goTo('/team/tasks')"
-                    class="text-xs text-yellow-600 hover:text-yellow-700 font-medium w-full text-center py-1"
-                  >
-                    Ver {{ criticalTasks.dueSoon.length - 3 }} más →
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
+        </div>
 
-        <!-- Estadísticas de tareas -->
-        <div class="bg-white rounded-lg shadow">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Estadísticas de Tareas</h2>
-          </div>
-          <div class="p-6">
-            <div class="space-y-4">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-gray-700">Completadas</span>
-                  <span class="text-sm font-semibold text-gray-900">{{ taskStats.completed }} / {{ taskStats.total }}</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    class="bg-green-600 h-2 rounded-full transition-all"
-                    :style="{ width: taskStats.completedPercentage + '%' }"
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-gray-700">En Progreso</span>
-                  <span class="text-sm font-semibold text-gray-900">{{ taskStats.inProgress }} / {{ taskStats.total }}</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    class="bg-blue-600 h-2 rounded-full transition-all"
-                    :style="{ width: taskStats.inProgressPercentage + '%' }"
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-gray-700">Pendientes</span>
-                  <span class="text-sm font-semibold text-gray-900">{{ taskStats.pending }} / {{ taskStats.total }}</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    class="bg-yellow-600 h-2 rounded-full transition-all"
-                    :style="{ width: taskStats.pendingPercentage + '%' }"
-                  ></div>
-                </div>
-              </div>
-
-              <div v-if="taskStats.overdue > 0" class="pt-4 border-t border-gray-200">
-                <div class="flex items-center justify-between text-red-600">
-                  <span class="text-sm font-medium flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        <!-- Derecha: Estadísticas de Tareas por Estado (vertical) -->
+        <div class="lg:w-56 flex-shrink-0 order-1 lg:order-2">
+          <div class="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:sticky lg:top-4">
+            <!-- Tareas Pendientes -->
+            <div
+              @click="openTasksByStatusModal('Pendiente')"
+              class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow group"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-orange-100 rounded-lg p-2.5 group-hover:bg-orange-200 transition-colors">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Tareas Vencidas
-                  </span>
-                  <span class="text-sm font-semibold">{{ taskStats.overdue }}</span>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Pendientes</p>
+                    <p class="text-xl font-bold text-gray-900">{{ taskStats.pending }}</p>
+                  </div>
                 </div>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Tareas En Progreso -->
+            <div
+              @click="openTasksByStatusModal('En Progreso')"
+              class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow group"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-blue-100 rounded-lg p-2.5 group-hover:bg-blue-200 transition-colors">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">En Progreso</p>
+                    <p class="text-xl font-bold text-gray-900">{{ taskStats.inProgress }}</p>
+                  </div>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Tareas Completadas -->
+            <div
+              @click="openTasksByStatusModal('Completada')"
+              class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow group"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-green-100 rounded-lg p-2.5 group-hover:bg-green-200 transition-colors">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Completadas</p>
+                    <p class="text-xl font-bold text-gray-900">{{ taskStats.completed }}</p>
+                  </div>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Tareas Vencidas -->
+            <div
+              @click="openTasksByStatusModal('Vencidas')"
+              class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow group"
+              :class="{ 'ring-2 ring-red-300': taskStats.overdue > 0 }"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-red-100 rounded-lg p-2.5 group-hover:bg-red-200 transition-colors">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-xs font-medium text-gray-500">Vencidas</p>
+                    <p class="text-xl font-bold" :class="taskStats.overdue > 0 ? 'text-red-600' : 'text-gray-900'">{{ taskStats.overdue }}</p>
+                  </div>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
 
     <!-- Modal de Usuarios Recientes -->
@@ -965,12 +905,6 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2 ml-4">
-                  <span
-                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                    :class="getPriorityBadgeClass(task.priority)"
-                  >
-                    {{ task.priority }}
-                  </span>
                   <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>
@@ -992,9 +926,10 @@
       </div>
     </div>
 
-    <!-- FAB (Floating Action Button) para crear tarea -->
+    <!-- FAB (Floating Action Button) para crear tarea - oculto cuando quick create está activo -->
     <button
-      @click="selectedTaskForEdit = null; isCreateModalOpen = true"
+      v-if="!isQuickCreateMode"
+      @click="activateQuickCreate"
       class="fixed bottom-20 right-6 lg:bottom-6 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-colors z-30"
       title="Crear nueva tarea"
     >
@@ -1053,22 +988,6 @@
                   />
                 </div>
               </div>
-            </div>
-
-            <!-- Estado -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Filtrar por estado
-              </label>
-              <select
-                v-model="newTabData.status"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En Progreso">En Progreso</option>
-                <option value="Completada">Completada</option>
-              </select>
             </div>
 
             <!-- Usuarios asignados (múltiples) -->
@@ -1184,7 +1103,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores'
 import { userService, tabService } from '@/services'
@@ -1197,7 +1116,7 @@ const router = useRouter()
 const taskStore = useTaskStore()
 const toast = useToast()
 
-const loading = ref(false)
+const loading = ref(true)
 const allUsers = ref([])
 const showUsersModal = ref(false)
 const showSupervisorsModal = ref(false)
@@ -1208,6 +1127,12 @@ const selectedTaskStatus = ref('')
 const isCreateModalOpen = ref(false)
 const selectedTaskForEdit = ref(null)
 
+// Variables para creación rápida de tareas
+const isQuickCreateMode = ref(false)
+const isCreatingTask = ref(false)
+const newTaskTitle = ref('')
+const quickCreateInput = ref(null)
+
 // Variables para pestañas personalizadas
 const currentTab = ref('all')
 const isTabModalOpen = ref(false)
@@ -1216,7 +1141,6 @@ const editingTabId = ref(null) // ID de la pestaña que se está editando
 const newTabData = ref({
   label: '',
   status: 'all',
-  priority: 'all',
   assigneeIds: []
 })
 
@@ -1228,7 +1152,6 @@ const selectedTabForMembers = ref(null)
 const taskFilters = ref({
   search: '',
   status: 'all',
-  priority: 'all',
   assigneeId: 'all'
 })
 
@@ -1371,10 +1294,6 @@ const filteredAllTasks = computed(() => {
     tasks = tasks.filter(t => t.status === taskFilters.value.status)
   }
 
-  if (taskFilters.value.priority !== 'all') {
-    tasks = tasks.filter(t => t.priority === taskFilters.value.priority)
-  }
-
   if (taskFilters.value.assigneeId !== 'all') {
     tasks = tasks.filter(t => {
       const assigneeId = t.assignee?.id || t.assignee_id || t.assigned_to
@@ -1382,17 +1301,11 @@ const filteredAllTasks = computed(() => {
     })
   }
 
-  // Ordenar: primero por prioridad, luego por fecha
-  const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
+  // Ordenar por fecha de creación (más recientes primero)
   tasks = [...tasks].sort((a, b) => {
-    const pA = priorityOrder[a.priority] ?? 3
-    const pB = priorityOrder[b.priority] ?? 3
-    if (pA !== pB) return pA - pB
-
-    if (!a.due_date && !b.due_date) return 0
-    if (!a.due_date) return 1
-    if (!b.due_date) return -1
-    return parseDateString(a.due_date) - parseDateString(b.due_date)
+    const dateA = a.created_at ? new Date(a.created_at) : 0
+    const dateB = b.created_at ? new Date(b.created_at) : 0
+    return dateB - dateA
   })
 
   return tasks
@@ -1415,7 +1328,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage, tota
 const hasActiveTaskFilters = computed(() => {
   return taskFilters.value.search !== '' ||
     taskFilters.value.status !== 'all' ||
-    taskFilters.value.priority !== 'all' ||
     taskFilters.value.assigneeId !== 'all'
 })
 
@@ -1424,7 +1336,6 @@ const clearTaskFilters = () => {
   taskFilters.value = {
     search: '',
     status: 'all',
-    priority: 'all',
     assigneeId: 'all'
   }
   currentPage.value = 1
@@ -1473,8 +1384,12 @@ const visiblePages = computed(() => {
 })
 
 // Helper functions para la lista de tareas
+const getTaskAssigneeId = (task) => {
+  return task.assignee?.id || task.assignee_id || task.assigned_to || ''
+}
+
 const getListAssigneeName = (task) => {
-  const assigneeId = task.assignee?.id || task.assignee_id || task.assigned_to
+  const assigneeId = getTaskAssigneeId(task)
   if (!assigneeId) return 'Sin asignar'
   const user = allUsers.value.find(u => u.id === assigneeId)
   return user?.name || task.assignee_name || 'Usuario'
@@ -1554,15 +1469,6 @@ const getListDueDateColor = (task) => {
   return 'text-gray-600'
 }
 
-const getListPriorityBadgeClass = (priority) => {
-  const classes = {
-    Alta: 'bg-red-100 text-red-700',
-    Media: 'bg-yellow-100 text-yellow-700',
-    Baja: 'bg-blue-100 text-blue-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
-}
-
 const getListStatusSelectClass = (status) => {
   const classes = {
     'Pendiente': 'bg-yellow-100 text-yellow-800',
@@ -1573,6 +1479,25 @@ const getListStatusSelectClass = (status) => {
 }
 
 // Manejar toggle de estado de tarea
+const handleAssigneeChange = async (task, newAssigneeId) => {
+  const previousAssigneeId = getTaskAssigneeId(task)
+  try {
+    // Actualizar todos los campos posibles para feedback inmediato
+    task.assignee_id = newAssigneeId
+    task.assigned_to = newAssigneeId
+    if (task.assignee) task.assignee = { ...task.assignee, id: newAssigneeId }
+    else task.assignee = { id: newAssigneeId }
+    await taskStore.reassignTask(task.id, newAssigneeId)
+    await taskStore.fetchTasks()
+    toast.success('Operador asignado correctamente')
+  } catch (error) {
+    task.assignee_id = previousAssigneeId
+    task.assigned_to = previousAssigneeId
+    if (task.assignee) task.assignee.id = previousAssigneeId
+    toast.error('Error al asignar operador')
+  }
+}
+
 const handleTaskStatusToggle = async (task) => {
   const newStatus = task.status === 'Completada' ? 'Pendiente' : 'Completada'
   try {
@@ -1683,6 +1608,46 @@ const handleSaveTask = async (taskData) => {
   }
 }
 
+// Funciones para creación rápida de tareas
+const activateQuickCreate = () => {
+  isQuickCreateMode.value = true
+  newTaskTitle.value = ''
+  // Hacer scroll al input y enfocarlo
+  nextTick(() => {
+    if (quickCreateInput.value) {
+      quickCreateInput.value.focus()
+      quickCreateInput.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
+}
+
+const cancelQuickCreate = () => {
+  isQuickCreateMode.value = false
+  newTaskTitle.value = ''
+}
+
+const handleQuickCreateTask = async () => {
+  const title = newTaskTitle.value.trim()
+  if (!title || isCreatingTask.value) return
+
+  isCreatingTask.value = true
+  try {
+    await taskStore.createTask({ title })
+    toast.success('Tarea creada correctamente')
+    newTaskTitle.value = ''
+    // Mantener el modo activo para crear más tareas
+    nextTick(() => {
+      if (quickCreateInput.value) {
+        quickCreateInput.value.focus()
+      }
+    })
+  } catch (error) {
+    toast.error(error.message || 'Error al crear la tarea')
+  } finally {
+    isCreatingTask.value = false
+  }
+}
+
 // Función para abrir el modal de tareas por estado
 const openTasksByStatusModal = (status) => {
   selectedTaskStatus.value = status
@@ -1706,11 +1671,7 @@ const filteredTasksByStatus = computed(() => {
   return tasks
     .filter(t => t.status === selectedTaskStatus.value)
     .sort((a, b) => {
-      // Ordenar por prioridad y luego por fecha
-      const priorityOrder = { 'Alta': 0, 'Media': 1, 'Baja': 2 }
-      const pA = priorityOrder[a.priority] ?? 3
-      const pB = priorityOrder[b.priority] ?? 3
-      if (pA !== pB) return pA - pB
+      // Ordenar por fecha
       if (!a.due_date && !b.due_date) return 0
       if (!a.due_date) return 1
       if (!b.due_date) return -1
@@ -1734,16 +1695,6 @@ const getTaskRowClass = (task) => {
   if (selectedTaskStatus.value === 'Vencidas') return 'bg-red-50'
   if (task.status === 'Completada') return 'bg-green-50'
   return ''
-}
-
-// Función para obtener clase de prioridad
-const getPriorityBadgeClass = (priority) => {
-  const classes = {
-    'Alta': 'bg-red-100 text-red-700',
-    'Media': 'bg-yellow-100 text-yellow-700',
-    'Baja': 'bg-blue-100 text-blue-700'
-  }
-  return classes[priority] || 'bg-gray-100 text-gray-700'
 }
 
 // Función para formatear fecha de tarea
@@ -1886,7 +1837,6 @@ const openTabModal = () => {
   newTabData.value = {
     label: '',
     status: 'all',
-    priority: 'all',
     assigneeIds: []
   }
   isTabModalOpen.value = true
@@ -1897,7 +1847,6 @@ const openEditTabModal = (tab) => {
   newTabData.value = {
     label: tab.label,
     status: tab.filters.status || 'all',
-    priority: tab.filters.priority || 'all',
     assigneeIds: tab.filters.assigneeIds ? [...tab.filters.assigneeIds] : []
   }
   isTabModalOpen.value = true
@@ -1928,7 +1877,6 @@ const createCustomTab = async (tabData) => {
       view_type: 'admin_dashboard',
       filters: {
         status: tabData.status || 'all',
-        priority: tabData.priority || 'all',
         assigneeIds: tabData.assigneeIds || []
       }
     })
@@ -1954,7 +1902,6 @@ const updateCustomTab = async (tabId, tabData) => {
       label: tabData.label,
       filters: {
         status: tabData.status || 'all',
-        priority: tabData.priority || 'all',
         assigneeIds: tabData.assigneeIds || []
       }
     })
@@ -1998,10 +1945,6 @@ const applyCustomTabFilters = (tasks, tab) => {
 
   if (tab.filters.status && tab.filters.status !== 'all') {
     filtered = filtered.filter(t => t.status === tab.filters.status)
-  }
-
-  if (tab.filters.priority && tab.filters.priority !== 'all') {
-    filtered = filtered.filter(t => t.priority === tab.filters.priority)
   }
 
   if (tab.filters.assigneeIds && tab.filters.assigneeIds.length > 0) {
@@ -2076,10 +2019,6 @@ const getTabTooltip = (tab) => {
 
   if (tab.filters.status && tab.filters.status !== 'all') {
     parts.push(`Estado: ${tab.filters.status}`)
-  }
-
-  if (tab.filters.priority && tab.filters.priority !== 'all') {
-    parts.push(`Prioridad: ${tab.filters.priority}`)
   }
 
   return parts.length > 0 ? parts.join(' | ') : 'Sin filtros adicionales'

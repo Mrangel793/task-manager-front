@@ -1,23 +1,35 @@
 <template>
   <div>
     <!-- Header con acciones -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Notificaciones</h1>
         <p class="text-sm text-gray-600 mt-1">
           {{ unreadCount }} {{ unreadCount === 1 ? 'notificación sin leer' : 'notificaciones sin leer' }}
         </p>
       </div>
-      <button
-        v-if="unreadCount > 0"
-        @click="handleMarkAllAsRead"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
-      >
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        Marcar todas como leídas
-      </button>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-if="unreadCount > 0"
+          @click="handleMarkAllAsRead"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+        >
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Marcar leídas
+        </button>
+        <button
+          v-if="hasNotifications"
+          @click="handleDeleteAll"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+        >
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Eliminar todas
+        </button>
+      </div>
     </div>
 
     <!-- Estado de carga -->
@@ -38,44 +50,59 @@
 
         <!-- Notificaciones del grupo -->
         <div class="divide-y divide-gray-200">
-          <router-link
+          <div
             v-for="notification in group.notifications"
             :key="notification.id"
-            :to="getNotificationLink(notification)"
-            @click="handleNotificationClick(notification)"
-            class="block px-4 py-4 hover:bg-gray-50 transition-colors"
-            :class="{ 'bg-blue-50': !notification.read }"
+            class="relative group"
           >
-            <div class="flex items-start space-x-3">
-              <!-- Ícono según tipo -->
-              <div
-                class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                :class="getIconBgClass(notification.type)"
-              >
-                <svg class="w-5 h-5" :class="getIconColorClass(notification.type)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(notification.type)" />
-                </svg>
-              </div>
+            <router-link
+              :to="getNotificationLink(notification)"
+              @click="handleNotificationClick(notification)"
+              class="block px-4 py-4 pr-12 hover:bg-gray-50 transition-colors"
+              :class="{ 'bg-blue-50': !notification.read }"
+            >
+              <div class="flex items-start space-x-3">
+                <!-- Ícono según tipo -->
+                <div
+                  class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                  :class="getIconBgClass(notification.type)"
+                >
+                  <svg class="w-5 h-5" :class="getIconColorClass(notification.type)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIconPath(notification.type)" />
+                  </svg>
+                </div>
 
-              <!-- Contenido -->
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900">
-                  {{ notification.title }}
-                </p>
-                <p class="text-sm text-gray-600 mt-1">
-                  {{ notification.message }}
-                </p>
-                <p class="text-xs text-gray-500 mt-2">
-                  {{ notification.timeAgo }}
-                </p>
-              </div>
+                <!-- Contenido -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ notification.title }}
+                  </p>
+                  <p class="text-sm text-gray-600 mt-1">
+                    {{ notification.message }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-2">
+                    {{ notification.timeAgo }}
+                  </p>
+                </div>
 
-              <!-- Badge sin leer -->
-              <div v-if="!notification.read" class="flex-shrink-0">
-                <div class="w-2 h-2 bg-primary-600 rounded-full"></div>
+                <!-- Badge sin leer -->
+                <div v-if="!notification.read" class="flex-shrink-0">
+                  <div class="w-2 h-2 bg-primary-600 rounded-full"></div>
+                </div>
               </div>
-            </div>
-          </router-link>
+            </router-link>
+
+            <!-- Botón eliminar individual -->
+            <button
+              @click.prevent="handleDeleteNotification(notification)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+              title="Eliminar notificación"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -96,14 +123,17 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/stores'
 import { useToast } from '@/composables/useToast'
 
 const notificationStore = useNotificationStore()
 const toast = useToast()
-const { groupedNotifications, unreadCount, loading } = storeToRefs(notificationStore)
+const { groupedNotifications, unreadCount, loading, notifications } = storeToRefs(notificationStore)
+
+// Computed para verificar si hay notificaciones
+const hasNotifications = computed(() => notifications.value.length > 0)
 
 // Cargar notificaciones al montar e iniciar polling
 onMounted(async () => {
@@ -128,6 +158,30 @@ const handleMarkAllAsRead = async () => {
   } catch (error) {
     toast.error('Error al marcar las notificaciones')
     console.error('Error al marcar todas como leídas:', error)
+  }
+}
+
+const handleDeleteNotification = async (notification) => {
+  try {
+    await notificationStore.deleteNotification(notification.id)
+    toast.success('Notificación eliminada')
+  } catch (error) {
+    toast.error('Error al eliminar la notificación')
+    console.error('Error al eliminar notificación:', error)
+  }
+}
+
+const handleDeleteAll = async () => {
+  if (!confirm('¿Estás seguro de eliminar todas las notificaciones? Esta acción no se puede deshacer.')) {
+    return
+  }
+
+  try {
+    await notificationStore.deleteAllNotifications()
+    toast.success('Todas las notificaciones eliminadas')
+  } catch (error) {
+    toast.error('Error al eliminar las notificaciones')
+    console.error('Error al eliminar todas las notificaciones:', error)
   }
 }
 
@@ -226,13 +280,6 @@ const getNotificationLink = (notification) => {
 // Obtener información adicional de la notificación para mostrar
 const getNotificationMeta = (notification) => {
   const meta = []
-
-  // Prioridad de la tarea
-  if (notification.data?.priority) {
-    meta.push({ label: 'Prioridad', value: notification.data.priority })
-  } else if (notification.task?.priority) {
-    meta.push({ label: 'Prioridad', value: notification.task.priority })
-  }
 
   // Creador/Asignador
   if (notification.data?.creator_name) {

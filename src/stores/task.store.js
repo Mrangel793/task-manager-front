@@ -12,7 +12,6 @@ export const useTaskStore = defineStore('task', () => {
   const filters = ref({
     search: '',
     status: 'all',
-    priority: 'all',
     dateFrom: null,
     dateTo: null
   })
@@ -29,22 +28,6 @@ export const useTaskStore = defineStore('task', () => {
   const completedTasks = computed(() =>
     tasks.value.filter(task => task.status === 'Completada')
   )
-
-  const tasksByPriority = computed(() => {
-    const grouped = {
-      high: [],
-      medium: [],
-      low: []
-    }
-
-    tasks.value.forEach(task => {
-      if (task.priority && grouped[task.priority]) {
-        grouped[task.priority].push(task)
-      }
-    })
-
-    return grouped
-  })
 
   const tasksCount = computed(() => ({
     total: tasks.value.length,
@@ -229,7 +212,6 @@ export const useTaskStore = defineStore('task', () => {
     filters.value = {
       search: '',
       status: 'all',
-      priority: 'all',
       dateFrom: null,
       dateTo: null
     }
@@ -259,7 +241,6 @@ export const useTaskStore = defineStore('task', () => {
     pendingTasks,
     inProgressTasks,
     completedTasks,
-    tasksByPriority,
     tasksCount,
     // Actions
     fetchTasks,
