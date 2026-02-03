@@ -2,9 +2,12 @@
   <div>
     <!-- Header stats -->
     <div class="mb-6">
-      <p class="text-sm text-gray-600">
-        {{ tasksCount.total }} tareas totales • {{ tasksCount.pending }} pendientes • {{ tasksCount.completed }} completadas
-      </p>
+      <div class="flex items-center gap-2">
+        <p class="text-sm text-gray-600">
+          {{ tasksCount.total }} tareas totales • {{ tasksCount.pending }} pendientes • {{ tasksCount.completed }} completadas
+        </p>
+        <div v-if="loading && taskStore.tasks.length > 0" class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+      </div>
     </div>
 
       <!-- Tabs -->
@@ -140,13 +143,8 @@
 
       <!-- Content -->
       <div>
-        <!-- Loading -->
-        <div v-if="loading" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
-
         <!-- Empty state -->
-        <div v-else-if="filteredTasks.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
+        <div v-if="filteredTasks.length === 0 && !loading" class="text-center py-12 bg-white rounded-lg shadow">
           <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -1225,9 +1223,9 @@ watch([filters, currentTab], () => {
   currentPage.value = 1
 }, { deep: true })
 
-onMounted(async () => {
-  await loadCustomTabs()
-  await Promise.all([
+onMounted(() => {
+  Promise.all([
+    loadCustomTabs(),
     loadTasks(),
     loadUsers()
   ])

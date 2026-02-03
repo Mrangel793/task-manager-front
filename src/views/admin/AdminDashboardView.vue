@@ -2,16 +2,14 @@
   <div>
     <!-- Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
+        <div v-if="loading && taskStore.tasks.length > 0" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+      </div>
       <p class="text-sm text-gray-600 mt-1">Vista general del sistema</p>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-    </div>
-
-    <div v-else>
+    <div>
       <!-- Layout principal: Tareas a la izquierda, Cards de estado a la derecha -->
       <div class="flex flex-col lg:flex-row gap-6">
 
@@ -1783,7 +1781,8 @@ const loadData = async () => {
   try {
     await Promise.all([
       taskStore.fetchTasks(),
-      loadAllUsers()
+      loadAllUsers(),
+      loadCustomTabs()
     ])
   } catch (error) {
     toast.error('Error al cargar los datos')
@@ -2029,8 +2028,7 @@ watch([taskFilters, currentTab], () => {
   currentPage.value = 1
 }, { deep: true })
 
-onMounted(async () => {
-  await loadCustomTabs()
-  await loadData()
+onMounted(() => {
+  loadData()
 })
 </script>
