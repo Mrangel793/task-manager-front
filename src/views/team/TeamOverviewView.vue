@@ -2,16 +2,14 @@
   <div>
     <!-- Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Resumen del Equipo</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold text-gray-900">Resumen del Equipo</h1>
+        <div v-if="loading" class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+      </div>
       <p class="text-sm text-gray-600 mt-1">Monitorea el rendimiento y tareas de tu equipo</p>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-    </div>
-
-    <div v-else>
+    <div>
       <!-- Métricas generales -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <!-- Total operadores -->
@@ -325,7 +323,13 @@ const goToAllTasks = () => {
 }
 
 const loadData = async () => {
-  loading.value = true
+  // Si ya hay datos, mostrarlos inmediatamente y refrescar en background
+  const hasExistingData = taskStore.tasks.length > 0 || operators.value.length > 0
+
+  if (!hasExistingData) {
+    loading.value = true
+  }
+
   try {
     await Promise.all([
       taskStore.fetchTasks(),

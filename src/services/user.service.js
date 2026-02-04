@@ -1,5 +1,10 @@
 import api from './api'
 
+// Cache para operadores (se invalida cada 2 minutos o manualmente)
+let operatorsCache = null
+let operatorsCacheTime = 0
+const CACHE_DURATION = 2 * 60 * 1000 // 2 minutos
+
 export const userService = {
   /**
    * Obtener todos los usuarios
@@ -20,12 +25,34 @@ export const userService = {
 
   /**
    * Obtener solo operadores (para asignación de tareas)
+   * Usa caché para evitar llamadas repetidas
    */
-  async getOperators() {
+  async getOperators(forceRefresh = false) {
+    const now = Date.now()
+
+    // Retornar caché si es válido
+    if (!forceRefresh && operatorsCache && (now - operatorsCacheTime) < CACHE_DURATION) {
+      return operatorsCache
+    }
+
     const response = await api.get('v1/users/', {
       params: { role: 'operador' }
     })
-    return response.data.data || response.data
+    const data = response.data.data || response.data
+
+    // Guardar en caché
+    operatorsCache = data
+    operatorsCacheTime = now
+
+    return data
+  },
+
+  /**
+   * Invalidar caché de operadores (llamar después de crear/editar usuarios)
+   */
+  clearOperatorsCache() {
+    operatorsCache = null
+    operatorsCacheTime = 0
   },
 
   /**
@@ -33,6 +60,7 @@ export const userService = {
    */
   async createUser(userData) {
     const response = await api.post('v1/users/', userData)
+    this.clearOperatorsCache() // Invalidar caché
     return response.data.data || response.data
   },
 
@@ -41,6 +69,7 @@ export const userService = {
    */
   async updateUser(id, userData) {
     const response = await api.patch(`v1/users/${id}/`, userData)
+    this.clearOperatorsCache() // Invalidar caché
     return response.data.data || response.data
   },
 
@@ -49,6 +78,7 @@ export const userService = {
    */
   async deleteUser(id) {
     const response = await api.delete(`v1/users/${id}/`)
+    this.clearOperatorsCache() // Invalidar caché
     return response.data
   }
 }
