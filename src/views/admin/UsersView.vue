@@ -3,7 +3,10 @@
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+          <div v-if="loading" class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+        </div>
         <p class="text-sm text-gray-600 mt-1">{{ users.length }} usuarios registrados</p>
       </div>
       <BaseButton variant="primary" @click="createUser">
@@ -32,13 +35,8 @@
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-    </div>
-
     <!-- Table -->
-    <div v-else-if="filteredUsers.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+    <div v-if="filteredUsers.length > 0 || loading" class="bg-white rounded-lg shadow overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -85,7 +83,7 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else class="text-center py-12 bg-white rounded-lg shadow">
+    <div v-else-if="!loading" class="text-center py-12 bg-white rounded-lg shadow">
       <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
