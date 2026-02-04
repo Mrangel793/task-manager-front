@@ -231,11 +231,8 @@ const filteredMyTasks = computed(() => {
       return dueDate >= today && dueDate <= weekEnd
     })
   } else if (activeQuickFilter.value === 'overdue') {
-    tasks = tasks.filter(t => {
-      if (!t.due_date || t.status === 'Completada') return false
-      const dueDate = new Date(t.due_date)
-      return dueDate < today
-    })
+    // Usar is_overdue del backend para consistencia
+    tasks = tasks.filter(t => t.is_overdue)
   }
 
   // Ordenar por fecha de creación (más recientes primero)

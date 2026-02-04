@@ -1212,16 +1212,13 @@ const criticalTasks = computed(() => {
   // Filtrar tareas no completadas
   const activeTasks = tasks.filter(t => t.status !== 'Completada')
 
-  // Tareas vencidas
-  const overdue = activeTasks.filter(t => {
-    if (!t.due_date) return false
-    const dueDate = parseDateString(t.due_date)
-    return dueDate && dueDate < today
-  }).sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))
+  // Tareas vencidas (usar is_overdue del backend para consistencia)
+  const overdue = tasks.filter(t => t.is_overdue)
+    .sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))
 
-  // Tareas que vencen hoy
+  // Tareas que vencen hoy (no vencidas)
   const dueToday = activeTasks.filter(t => {
-    if (!t.due_date) return false
+    if (!t.due_date || t.is_overdue) return false
     const dueDate = parseDateString(t.due_date)
     return dueDate && dueDate.getTime() === today.getTime()
   }).sort((a, b) => {
@@ -1234,7 +1231,7 @@ const criticalTasks = computed(() => {
 
   // Tareas que vencen en los próximos 3 días (excluyendo hoy)
   const dueSoon = activeTasks.filter(t => {
-    if (!t.due_date) return false
+    if (!t.due_date || t.is_overdue) return false
     const dueDate = parseDateString(t.due_date)
     return dueDate && dueDate >= tomorrow && dueDate <= threeDaysFromNow
   }).sort((a, b) => parseDateString(a.due_date) - parseDateString(b.due_date))

@@ -222,14 +222,9 @@ const metrics = computed(() => {
 // Alertas
 const alerts = computed(() => {
   const alertList = []
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-  // Tareas vencidas
-  const overdueTasks = taskStore.tasks.filter(t => {
-    if (!t.due_date || t.status === 'Completada') return false
-    return new Date(t.due_date) < today
-  })
+  // Tareas vencidas (usar is_overdue del backend para consistencia)
+  const overdueTasks = taskStore.tasks.filter(t => t.is_overdue)
 
   if (overdueTasks.length > 0) {
     alertList.push({
@@ -241,10 +236,16 @@ const alerts = computed(() => {
   }
 
   // Tareas que vencen hoy
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
   const dueTodayTasks = taskStore.tasks.filter(t => {
-    if (!t.due_date || t.status === 'Completada') return false
-    const dueDate = new Date(t.due_date)
-    return dueDate >= today && dueDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)
+    if (!t.due_date || t.status === 'Completada' || t.is_overdue) return false
+    // Parse date string correctly to avoid timezone issues
+    const parts = t.due_date.split('-')
+    if (parts.length !== 3) return false
+    const dueDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+    return dueDate >= today && dueDate < tomorrow
   })
 
   if (dueTodayTasks.length > 0) {
@@ -272,13 +273,8 @@ const teamMembers = computed(() => {
     const pending = operatorTasks.filter(t => t.status === 'Pendiente').length
     const total = operatorTasks.length
 
-    // Tareas vencidas
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const overdue = operatorTasks.filter(t => {
-      if (!t.due_date || t.status === 'Completada') return false
-      return new Date(t.due_date) < today
-    }).length
+    // Tareas vencidas (usar is_overdue del backend para consistencia)
+    const overdue = operatorTasks.filter(t => t.is_overdue).length
 
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
 

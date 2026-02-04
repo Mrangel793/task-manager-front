@@ -212,13 +212,8 @@ const memberStats = computed(() => {
   const completed = tasks.filter(t => t.status === 'Completada').length
   const pending = tasks.filter(t => t.status !== 'Completada').length
 
-  // Tareas vencidas
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const overdue = tasks.filter(t => {
-    if (!t.due_date || t.status === 'Completada') return false
-    return new Date(t.due_date) < today
-  }).length
+  // Tareas vencidas (usar is_overdue del backend para consistencia)
+  const overdue = tasks.filter(t => t.is_overdue).length
 
   return {
     total: tasks.length,

@@ -348,13 +348,11 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter(t => t.due_date && new Date(t.due_date) <= dateTo)
   }
 
-  // Filtrar vencidas
+  // Filtrar vencidas (usar is_overdue del backend para consistencia)
   if (filters.value.showOverdue === 'overdue') {
-    const today = new Date()
-    tasks = tasks.filter(t => t.due_date && new Date(t.due_date) < today && t.status !== 'Completada')
+    tasks = tasks.filter(t => t.is_overdue)
   } else if (filters.value.showOverdue === 'not-overdue') {
-    const today = new Date()
-    tasks = tasks.filter(t => !t.due_date || new Date(t.due_date) >= today || t.status === 'Completada')
+    tasks = tasks.filter(t => !t.is_overdue)
   }
 
   // Ordenar por fecha de creación (más recientes primero)

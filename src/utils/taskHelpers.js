@@ -297,10 +297,19 @@ export function getTaskStats(tasks) {
     else if (task.status === TASK_STATUSES.COMPLETED) stats.completed++
     else if (task.status === TASK_STATUSES.CANCELLED) stats.cancelled++
 
-    // Por urgencia
-    const urgency = getTaskUrgency(task)
-    if (urgency.level === URGENCY_LEVELS.OVERDUE) stats.overdue++
-    else if (urgency.level === URGENCY_LEVELS.URGENT) stats.urgent++
+    // Por urgencia - usar is_overdue del backend si está disponible para consistencia
+    if (task.is_overdue !== undefined) {
+      if (task.is_overdue) stats.overdue++
+      else {
+        const urgency = getTaskUrgency(task)
+        if (urgency.level === URGENCY_LEVELS.URGENT) stats.urgent++
+      }
+    } else {
+      // Fallback si is_overdue no está disponible
+      const urgency = getTaskUrgency(task)
+      if (urgency.level === URGENCY_LEVELS.OVERDUE) stats.overdue++
+      else if (urgency.level === URGENCY_LEVELS.URGENT) stats.urgent++
+    }
   })
 
   stats.completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
