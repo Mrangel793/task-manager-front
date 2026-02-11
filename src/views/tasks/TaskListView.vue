@@ -4,7 +4,7 @@
     <div class="mb-6">
       <div class="flex items-center gap-2">
         <p class="text-sm text-gray-600">
-          {{ tasksCount.total }} tareas totales • {{ tasksCount.pending }} pendientes • {{ tasksCount.completed }} completadas
+          {{ activeTasksCount }} tareas activas • {{ tasksCount.pending }} pendientes • {{ tasksCount.porVerificar }} por verificar
         </p>
         <div v-if="loading && taskStore.tasks.length > 0" class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
       </div>
@@ -24,7 +24,7 @@
             Todas
             <span :class="currentTab === 'all' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-900'"
                   class="ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium">
-              {{ taskStore.tasks.length }}
+              {{ activeTasksCount }}
             </span>
           </button>
 
@@ -111,7 +111,7 @@
             <option value="all">Todos los estados</option>
             <option value="Pendiente">Pendiente</option>
             <option value="En Progreso">En Progreso</option>
-            <option value="Completada">Completada</option>
+            <option value="Por Verificar">Por Verificar</option>
             <option value="Cancelada">Cancelada</option>
           </select>
 
@@ -158,10 +158,9 @@
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Table Header -->
           <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-5 lg:col-span-5">Tarea</div>
+            <div class="col-span-5 lg:col-span-6">Tarea</div>
             <div class="col-span-4 sm:hidden">Asignado</div>
-            <div class="col-span-2 hidden sm:block lg:col-span-3">Asignado</div>
-            <div class="col-span-1 hidden md:block">Fecha</div>
+            <div class="col-span-3 hidden sm:block">Asignado</div>
             <div class="hidden sm:block sm:col-span-2">Estado</div>
             <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
           </div>
@@ -173,10 +172,12 @@
               :key="task.id"
               @click="handleTaskClick(task)"
               class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
-              :class="{ 'bg-green-50/50': task.status === 'Completada' }"
+              :class="{
+                'bg-green-50/50': task.status === 'Completada' || task.status === 'Por Verificar'
+              }"
             >
               <!-- Task name with checkbox -->
-              <div class="col-span-5 sm:col-span-5 lg:col-span-5 flex items-start min-w-0">
+              <div class="col-span-5 lg:col-span-6 flex items-start min-w-0">
                 <button
                   @click.stop="handleRequestComplete({ task })"
                   class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 mt-0.5 flex items-center justify-center transition-colors"
@@ -195,6 +196,20 @@
                   >
                     {{ task.title }}
                   </span>
+                  <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span v-if="task.due_date" class="inline-flex items-center gap-1 text-xs" :class="getDueDateColor(task)">
+                      <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {{ formatDueDate(task.due_date) }}
+                    </span>
+                    <span v-if="task.status === 'Por Verificar'" class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      Completada
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -213,7 +228,7 @@
               </div>
 
               <!-- Assignee desktop -->
-              <div class="col-span-2 hidden sm:flex items-center lg:col-span-3" @click.stop>
+              <div class="col-span-3 hidden sm:flex items-center" @click.stop>
                 <div
                   class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
                   :class="getAvatarColor(getAssigneeName(task))"
@@ -232,16 +247,6 @@
                 </select>
               </div>
 
-              <!-- Due date (hidden on mobile and sm) -->
-              <div class="col-span-1 items-center hidden md:flex">
-                <svg class="w-4 h-4 mr-1 flex-shrink-0" :class="getDueDateColor(task)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="text-sm" :class="getDueDateColor(task)">
-                  {{ formatDueDate(task.due_date) }}
-                </span>
-              </div>
-
               <!-- Status (hidden on mobile) -->
               <div class="hidden sm:block sm:col-span-2" @click.stop>
                 <select
@@ -252,6 +257,7 @@
                 >
                   <option value="Pendiente">Pendiente</option>
                   <option value="En Progreso">En Progreso</option>
+                  <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
                   <option value="Completada">Completada</option>
                 </select>
               </div>
@@ -368,7 +374,7 @@
       :is-open="isModalOpen"
       :task="selectedTaskForEdit"
       :users="users"
-      @save="handleSaveTask"
+      :on-save="handleSaveTask"
       @cancel="closeModal"
     />
 
@@ -598,13 +604,35 @@ const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const toast = useToast()
 
+// Helpers para caché localStorage
+const TL_USERS_KEY = 'tasklist_users_cache'
+const TL_TABS_KEY = 'tasklist_tabs_cache'
+
+function loadCached(key) {
+  try {
+    const cached = localStorage.getItem(key)
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      if (Date.now() - parsed.timestamp < 5 * 60 * 1000) return parsed.data
+      localStorage.removeItem(key)
+    }
+  } catch { localStorage.removeItem(key) }
+  return []
+}
+
+function saveCached(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch { /* ignore */ }
+}
+
 const currentTab = ref('all')
 const loading = ref(false)
 const isModalOpen = ref(false)
 const isTabModalOpen = ref(false)
 const selectedTaskForEdit = ref(null)
-const users = ref([])
-const customTabs = ref([])
+const users = ref(loadCached(TL_USERS_KEY))
+const customTabs = ref(loadCached(TL_TABS_KEY))
 
 const confirmModal = ref({
   isOpen: false,
@@ -641,9 +669,11 @@ const isTabMembersModalOpen = ref(false)
 const selectedTabForMembers = ref(null)
 
 const tasksCount = computed(() => taskStore.tasksCount)
+const activeTasksCount = computed(() => taskStore.tasks.filter(t => t.status !== 'Completada').length)
 
 const filteredTasks = computed(() => {
-  let tasks = taskStore.tasks
+  // Excluir tareas completadas (se ven en la vista dedicada /verificar)
+  let tasks = taskStore.tasks.filter(t => t.status !== 'Completada')
 
   // Filtrar por pestaña personalizada
   if (currentTab.value !== 'all') {
@@ -663,7 +693,11 @@ const filteredTasks = computed(() => {
   }
 
   if (filters.value.status !== 'all') {
-    tasks = tasks.filter(t => t.status === filters.value.status)
+    if (filters.value.status === 'Completada') {
+      tasks = tasks.filter(t => t.status === 'Completada' || t.status === 'Por Verificar')
+    } else {
+      tasks = tasks.filter(t => t.status === filters.value.status)
+    }
   }
 
   if (filters.value.assigneeId !== 'all') {
@@ -933,13 +967,17 @@ const getStatusSelectClass = (status) => {
   const classes = {
     'Pendiente': 'bg-yellow-100 text-yellow-800',
     'En Progreso': 'bg-blue-100 text-blue-800',
+    'Por Verificar': 'bg-green-100 text-green-800',
     'Completada': 'bg-green-100 text-green-800'
   }
   return classes[status] || 'bg-gray-100 text-gray-800'
 }
 
 const loadTasks = async () => {
-  loading.value = true
+  const hasCachedData = taskStore.tasks.length > 0
+  if (!hasCachedData) {
+    loading.value = true
+  }
   try {
     await taskStore.fetchTasks()
   } catch (error) {
@@ -971,6 +1009,7 @@ const loadUsers = async () => {
         role: currentUser.role
       })
     }
+    saveCached(TL_USERS_KEY, users.value)
   } catch (error) {
     console.error('Error al cargar usuarios:', error)
     const currentUser = authStore.user
@@ -1044,8 +1083,15 @@ const handleAssigneeChange = async (task, newAssigneeId) => {
 
 const handleStatusChangeSelect = async (task) => {
   try {
-    await taskStore.updateTaskStatus(task.id, task.status)
-    toast.success('Estado actualizado correctamente')
+    let status = task.status
+    // Si no es admin y selecciona "Completada", enviar "Por Verificar"
+    const role = authStore.userRole
+    if (status === 'Completada' && role !== 'admin' && role !== 'supervisor') {
+      status = 'Por Verificar'
+      task.status = 'Por Verificar'
+    }
+    await taskStore.updateTaskStatus(task.id, status)
+    toast.success(status === 'Por Verificar' ? 'Tarea completada' : 'Estado actualizado correctamente')
   } catch (error) {
     toast.error('Error al actualizar el estado')
     await taskStore.fetchTasks()
@@ -1053,8 +1099,8 @@ const handleStatusChangeSelect = async (task) => {
 }
 
 const handleRequestComplete = ({ task }) => {
-  if (task.status === 'Completada') {
-    // Si ya está completada, reabrir
+  if (task.status === 'Completada' || task.status === 'Por Verificar') {
+    // Si ya está completada o por verificar, reabrir
     handleStatusChange({ task, newStatus: 'Pendiente' })
   } else {
     // Mostrar dialogo de confirmación
@@ -1070,7 +1116,7 @@ const handleConfirmComplete = async () => {
   if (!task) return
 
   try {
-    await taskStore.updateTaskStatus(task.id, 'Completada')
+    await taskStore.updateTaskStatus(task.id, 'Por Verificar')
     toast.success('Tarea completada correctamente')
     completeConfirmDialog.value = {
       visible: false,
@@ -1122,6 +1168,7 @@ const loadCustomTabs = async () => {
       label: tab.label,
       filters: tab.filters || {}
     }))
+    saveCached(TL_TABS_KEY, customTabs.value)
   } catch (error) {
     console.error('Error al cargar pestañas:', error)
   }
@@ -1223,11 +1270,13 @@ watch([filters, currentTab], () => {
   currentPage.value = 1
 }, { deep: true })
 
-onMounted(() => {
+onMounted(async () => {
+  // Primero las tareas (se muestran de inmediato)
+  await loadTasks()
+  // Usuarios y tabs cargan en background
   Promise.all([
     loadCustomTabs(),
-    loadTasks(),
     loadUsers()
-  ])
+  ]).catch(() => {})
 })
 </script>

@@ -52,12 +52,7 @@
       <main class="flex-1 overflow-y-auto pb-16 lg:pb-0">
         <div class="container mx-auto px-4 py-6 max-w-7xl">
           <router-view v-slot="{ Component, route }">
-            <Transition
-              name="fade"
-              mode="out-in"
-            >
-              <component :is="Component" :key="route.path" />
-            </Transition>
+            <component :is="Component" :key="route.name" />
           </router-view>
         </div>
       </main>

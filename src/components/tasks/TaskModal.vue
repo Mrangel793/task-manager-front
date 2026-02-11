@@ -173,6 +173,10 @@ const props = defineProps({
   users: {
     type: Array,
     default: () => []
+  },
+  onSave: {
+    type: Function,
+    default: null
   }
 })
 
@@ -291,10 +295,12 @@ const handleSubmit = async () => {
 
   try {
     const taskData = { ...formData }
-    // No convertir assignee_id a número porque el backend espera UUID (string)
-    // El assignee_id ya viene como string del selector
 
-    emit('save', taskData)
+    if (props.onSave) {
+      await props.onSave(taskData)
+    } else {
+      emit('save', taskData)
+    }
   } catch (error) {
     submitError.value = error.message || 'Error al guardar la tarea'
   } finally {
@@ -320,7 +326,7 @@ watch(() => props.task, (newTask) => {
     formData.title = newTask.title || ''
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
-    formData.assignee_id = newTask.assignee_id || newTask.assigned_to || null
+    formData.assignee_id = newTask.assignee?.id || newTask.assignee_id || newTask.assigned_to || null
   } else {
     resetForm()
     // Si es operario, auto-asignarse al crear una nueva tarea

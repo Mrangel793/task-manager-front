@@ -46,6 +46,25 @@
         <span>Buscar...</span>
       </button>
 
+      <!-- Verificar (admin only) -->
+      <router-link
+        v-if="authStore.userRole === 'admin'"
+        to="/verificar"
+        class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+
+        <!-- Badge -->
+        <span
+          v-if="completedTasks.length > 0"
+          class="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full"
+        >
+          {{ completedTasks.length > 9 ? '9+' : completedTasks.length }}
+        </span>
+      </router-link>
+
       <!-- Notifications -->
       <router-link
         to="/notifications"
@@ -82,7 +101,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAuthStore, useNotificationStore } from '@/stores'
+import { useAuthStore, useNotificationStore, useTaskStore } from '@/stores'
 import UserMenu from './UserMenu.vue'
 
 defineEmits(['toggle-sidebar', 'open-search'])
@@ -90,7 +109,9 @@ defineEmits(['toggle-sidebar', 'open-search'])
 const route = useRoute()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const taskStore = useTaskStore()
 const { unreadCount } = storeToRefs(notificationStore)
+const { completedTasks } = storeToRefs(taskStore)
 
 // Iniciar polling de notificaciones al montar el header
 onMounted(() => {

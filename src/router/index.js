@@ -78,16 +78,6 @@ const routes = [
         }
       },
       {
-        path: 'profile/settings',
-        name: 'profile-settings',
-        component: () => import('@/views/profile/SettingsView.vue'),
-        meta: {
-          requiresAuth: true,
-          title: 'Configuración',
-          subtitle: 'Preferencias y notificaciones'
-        }
-      },
-      {
         path: 'profile/notifications',
         name: 'profile-notifications',
         component: () => import('@/views/profile/NotificationSettingsView.vue'),
@@ -106,6 +96,18 @@ const routes = [
           requiresAuth: true,
           title: 'Notificaciones',
           subtitle: 'Alertas y actualizaciones'
+        }
+      },
+      // Verificación de tareas (Admin)
+      {
+        path: 'verificar',
+        name: 'verificar',
+        component: () => import('@/views/tasks/PorVerificarView.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: ['admin'],
+          title: 'Tareas Completadas',
+          subtitle: 'Tareas verificadas y finalizadas'
         }
       },
       // Team routes (Supervisor & Admin)

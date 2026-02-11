@@ -125,6 +125,7 @@
                 >
                   <option value="Pendiente">Pendiente</option>
                   <option value="En Progreso">En Progreso</option>
+                  <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
                   <option value="Completada">Completada</option>
                 </select>
               </div>
@@ -268,7 +269,7 @@
       :is-open="isEditModalOpen"
       :task="task"
       :users="users"
-      @save="handleSaveEdit"
+      :on-save="handleSaveEdit"
       @cancel="isEditModalOpen = false"
     />
 
@@ -310,6 +311,7 @@ const taskHistory = ref([])
 const statusBadges = {
   'Pendiente': { label: 'Pendiente', class: 'bg-gray-100 text-gray-800' },
   'En Progreso': { label: 'En Progreso', class: 'bg-blue-100 text-blue-800' },
+  'Por Verificar': { label: 'Completada', class: 'bg-green-100 text-green-800' },
   'Completada': { label: 'Completada', class: 'bg-green-100 text-green-800' },
   'Cancelada': { label: 'Cancelada', class: 'bg-red-100 text-red-800' }
 }
@@ -424,9 +426,14 @@ const handleDelete = async () => {
 
 const handleStatusChange = async (newStatus) => {
   try {
+    const role = authStore.userRole
+    if (newStatus === 'Completada' && role !== 'admin' && role !== 'supervisor') {
+      newStatus = 'Por Verificar'
+    }
     await taskStore.updateTaskStatus(task.value.id, newStatus)
     task.value.status = newStatus
-    toast.success('Estado actualizado correctamente')
+    selectedStatus.value = newStatus
+    toast.success(newStatus === 'Por Verificar' ? 'Tarea completada' : 'Estado actualizado correctamente')
     // Recargar historial después de cambiar estado
     await loadTaskHistory()
   } catch (error) {
@@ -438,6 +445,7 @@ const getStatusSelectClass = (status) => {
   const classes = {
     'Pendiente': 'border-gray-300 bg-gray-50',
     'En Progreso': 'border-blue-300 bg-blue-50 text-blue-900',
+    'Por Verificar': 'border-green-300 bg-green-50 text-green-900',
     'Completada': 'border-green-300 bg-green-50 text-green-900'
   }
   return classes[status] || ''

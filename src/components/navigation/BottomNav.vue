@@ -42,14 +42,16 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAuthStore, useNotificationStore } from '@/stores'
+import { useAuthStore, useNotificationStore, useTaskStore } from '@/stores'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+const taskStore = useTaskStore()
 
 const userRole = computed(() => authStore.userRole)
 const { unreadCount } = storeToRefs(notificationStore)
+const { completedTasks } = storeToRefs(taskStore)
 
 // Navegación para Operario
 const operarioNav = computed(() => [
@@ -96,13 +98,20 @@ const supervisorNav = [
   }
 ]
 
-// Navegación para Admin
-const adminNav = [
+// Navegación para Admin (computed para reactividad del badge)
+const adminNav = computed(() => [
   {
     name: 'tasks',
     label: 'Tareas',
     to: '/admin/dashboard',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
+  },
+  {
+    name: 'completadas',
+    label: 'Completadas',
+    to: '/verificar',
+    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    badge: { count: completedTasks.value.length }
   },
   {
     name: 'team',
@@ -116,12 +125,12 @@ const adminNav = [
     to: '/profile',
     icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
   }
-]
+])
 
 const navItems = computed(() => {
   switch (userRole.value) {
     case 'admin':
-      return adminNav
+      return adminNav.value
     case 'supervisor':
       return supervisorNav
     case 'operario':

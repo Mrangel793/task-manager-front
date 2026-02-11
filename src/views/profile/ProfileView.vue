@@ -108,6 +108,72 @@
             Cambiar Contraseña
           </BaseButton>
 
+          <BaseButton
+            @click="showTextSizeModal = true"
+            variant="secondary"
+            class="flex-1 sm:flex-none"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+            </svg>
+            Tamaño de Texto
+          </BaseButton>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tamaño de Texto -->
+    <div v-if="showTextSizeModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="showTextSizeModal = false">
+      <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-900">Tamaño de Texto</h3>
+            <button @click="showTextSizeModal = false" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Size options -->
+          <div class="space-y-3 mb-6">
+            <button
+              v-for="option in textSizeOptions"
+              :key="option.value"
+              @click="setTextSize(option.value)"
+              class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors"
+              :class="currentTextSize === option.value
+                ? 'border-primary-500 bg-primary-50'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+            >
+              <span :style="{ fontSize: option.preview }" class="font-medium text-gray-900">
+                {{ option.label }}
+              </span>
+              <svg v-if="currentTextSize === option.value" class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Preview -->
+          <div class="p-4 bg-gray-50 rounded-lg mb-6">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Vista previa</p>
+            <p :style="{ fontSize: previewFontSize }" class="text-gray-900">
+              Este es un texto de ejemplo para ver el tamaño seleccionado.
+            </p>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              @click="showTextSizeModal = false"
+              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            >
+              Listo
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -193,33 +259,6 @@
       </div>
     </div>
 
-    <!-- Settings shortcut -->
-    <div class="mt-6 bg-white rounded-lg shadow p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="flex-shrink-0">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-base font-semibold text-gray-900">Configuración</h3>
-            <p class="text-sm text-gray-600">Preferencias y notificaciones</p>
-          </div>
-        </div>
-        <BaseButton
-          @click="goToSettings"
-          variant="secondary"
-          size="sm"
-        >
-          Abrir
-          <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </BaseButton>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -236,6 +275,41 @@ const authStore = useAuthStore()
 const toast = useToast()
 
 const user = computed(() => authStore.user)
+
+// Variables para tamaño de texto
+const showTextSizeModal = ref(false)
+
+const textSizeOptions = [
+  { value: 'small', label: 'Pequeño', preview: '13px', css: '14px' },
+  { value: 'normal', label: 'Normal', preview: '15px', css: '16px' },
+  { value: 'large', label: 'Grande', preview: '17px', css: '18px' },
+  { value: 'xlarge', label: 'Muy grande', preview: '20px', css: '20px' }
+]
+
+const currentTextSize = ref(localStorage.getItem('app_text_size') || 'normal')
+
+const previewFontSize = computed(() => {
+  const option = textSizeOptions.find(o => o.value === currentTextSize.value)
+  return option?.preview || '15px'
+})
+
+const setTextSize = (size) => {
+  currentTextSize.value = size
+  localStorage.setItem('app_text_size', size)
+  const option = textSizeOptions.find(o => o.value === size)
+  if (option) {
+    document.documentElement.style.fontSize = option.css
+  }
+}
+
+// Aplicar tamaño guardado al montar
+const savedSize = localStorage.getItem('app_text_size')
+if (savedSize) {
+  const option = textSizeOptions.find(o => o.value === savedSize)
+  if (option) {
+    document.documentElement.style.fontSize = option.css
+  }
+}
 
 // Variables para cambio de contraseña
 const showPasswordModal = ref(false)
@@ -342,7 +416,4 @@ const handleChangePassword = async () => {
   }
 }
 
-const goToSettings = () => {
-  router.push('/profile/settings')
-}
 </script>

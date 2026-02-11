@@ -6,7 +6,7 @@
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Todas las Tareas</h1>
           <p class="text-sm text-gray-600 mt-1">
-            {{ tasksCount.total }} tareas totales • {{ tasksCount.pending }} pendientes • {{ tasksCount.completed }} completadas
+            {{ activeTasks.length }} tareas activas • {{ tasksCount.pending }} pendientes • {{ tasksCount.porVerificar }} por verificar
           </p>
         </div>
         <BaseButton
@@ -43,7 +43,7 @@
             <option value="all">Todos</option>
             <option value="Pendiente">Pendientes</option>
             <option value="En Progreso">En Progreso</option>
-            <option value="Completada">Completadas</option>
+            <option value="Por Verificar">Por Verificar</option>
           </select>
         </div>
 
@@ -166,7 +166,9 @@
             :key="task.id"
             @click="viewTask(task)"
             class="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
-            :class="{ 'bg-green-50/50': task.status === 'Completada' }"
+            :class="{
+              'bg-green-50/50': task.status === 'Completada' || task.status === 'Por Verificar'
+            }"
           >
             <!-- Task name with checkbox -->
             <div class="col-span-5 flex items-center min-w-0">
@@ -228,6 +230,7 @@
               >
                 <option value="Pendiente">Pendiente</option>
                 <option value="En Progreso">En Progreso</option>
+                <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
                 <option value="Completada">Completada</option>
               </select>
               <span
@@ -262,7 +265,7 @@
       :is-open="isModalOpen"
       :task="selectedTaskForEdit"
       :users="users"
-      @save="handleSaveTask"
+      :on-save="handleSaveTask"
       @cancel="closeModal"
     />
   </div>
@@ -300,20 +303,23 @@ const filters = ref({
 
 const tasksCount = computed(() => taskStore.tasksCount)
 
+// Base: excluir completadas (se ven en /verificar)
+const activeTasks = computed(() => taskStore.tasks.filter(t => t.status !== 'Completada'))
+
 const tabs = computed(() => [
-  { value: 'all', label: 'Todas', count: taskStore.tasks.length },
+  { value: 'all', label: 'Todas', count: activeTasks.value.length },
   { value: 'pending', label: 'Pendientes', count: taskStore.pendingTasks.length },
-  { value: 'completed', label: 'Completadas', count: taskStore.completedTasks.length }
+  { value: 'por-verificar', label: 'Por Verificar', count: taskStore.porVerificarTasks.length }
 ])
 
 const filteredTasks = computed(() => {
-  let tasks = taskStore.tasks
+  let tasks = activeTasks.value
 
   // Filtrar por tab
   if (currentTab.value === 'pending') {
-    tasks = tasks.filter(t => t.status !== 'Completada')
-  } else if (currentTab.value === 'completed') {
-    tasks = tasks.filter(t => t.status === 'Completada')
+    tasks = tasks.filter(t => t.status !== 'Por Verificar')
+  } else if (currentTab.value === 'por-verificar') {
+    tasks = tasks.filter(t => t.status === 'Por Verificar')
   }
 
   // Aplicar búsqueda
@@ -419,6 +425,7 @@ const getStatusSelectClass = (status) => {
   const classes = {
     'Pendiente': 'bg-yellow-100 text-yellow-800',
     'En Progreso': 'bg-blue-100 text-blue-800',
+    'Por Verificar': 'bg-green-100 text-green-800',
     'Completada': 'bg-green-100 text-green-800'
   }
   return classes[status] || 'bg-gray-100 text-gray-800'
@@ -428,6 +435,7 @@ const getStatusBadgeClass = (status) => {
   const classes = {
     'Pendiente': 'bg-gray-100 text-gray-700',
     'En Progreso': 'bg-blue-100 text-blue-700',
+    'Por Verificar': 'bg-green-100 text-green-700',
     'Completada': 'bg-green-100 text-green-700'
   }
   return classes[status] || 'bg-gray-100 text-gray-700'
@@ -435,8 +443,14 @@ const getStatusBadgeClass = (status) => {
 
 const handleStatusChange = async (task) => {
   try {
-    await taskStore.updateTaskStatus(task.id, task.status)
-    toast.success('Estado actualizado correctamente')
+    let status = task.status
+    const role = authStore.userRole
+    if (status === 'Completada' && role !== 'admin' && role !== 'supervisor') {
+      status = 'Por Verificar'
+      task.status = 'Por Verificar'
+    }
+    await taskStore.updateTaskStatus(task.id, status)
+    toast.success(status === 'Por Verificar' ? 'Tarea completada' : 'Estado actualizado correctamente')
   } catch (error) {
     toast.error('Error al actualizar el estado')
     await taskStore.fetchTasks()
@@ -445,9 +459,24 @@ const handleStatusChange = async (task) => {
 
 const toggleTaskComplete = async (task) => {
   try {
-    const newStatus = task.status === 'Completada' ? 'Pendiente' : 'Completada'
+    const role = authStore.userRole
+    let newStatus
+    if (task.status === 'Completada') {
+      newStatus = 'Pendiente'
+    } else if (task.status === 'Por Verificar' && (role === 'admin' || role === 'supervisor')) {
+      newStatus = 'Completada'
+    } else if (role === 'admin' || role === 'supervisor') {
+      newStatus = 'Completada'
+    } else {
+      newStatus = 'Por Verificar'
+    }
     await taskStore.updateTaskStatus(task.id, newStatus)
-    toast.success(newStatus === 'Completada' ? 'Tarea completada' : 'Tarea reabierta')
+    const messages = {
+      'Completada': 'Tarea completada',
+      'Por Verificar': 'Tarea completada',
+      'Pendiente': 'Tarea reabierta'
+    }
+    toast.success(messages[newStatus])
   } catch (error) {
     toast.error('Error al actualizar el estado')
   }
