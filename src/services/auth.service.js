@@ -20,11 +20,17 @@ export const authService = {
       localStorage.setItem('user', JSON.stringify(user))
     }
 
+    const organization = responseData.organization
+    if (organization) {
+      localStorage.setItem('organization', JSON.stringify(organization))
+    }
+
     // Devolver en formato camelCase para consistencia
     return {
       accessToken,
       user,
-      tokenType
+      tokenType,
+      organization
     }
   },
 
@@ -47,10 +53,16 @@ export const authService = {
       localStorage.setItem('user', JSON.stringify(user))
     }
 
+    const organization = responseData.organization
+    if (organization) {
+      localStorage.setItem('organization', JSON.stringify(organization))
+    }
+
     return {
       accessToken,
       user,
-      tokenType
+      tokenType,
+      organization
     }
   },
 
@@ -104,6 +116,7 @@ export const authService = {
     } finally {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('user')
+      localStorage.removeItem('organization')
     }
   },
 
@@ -113,11 +126,16 @@ export const authService = {
   async getMe() {
     const response = await api.get('v1/auth/me/')
 
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data))
+    const userData = response.data
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData))
+      // Organization puede venir dentro de la respuesta de /me
+      if (userData.organization) {
+        localStorage.setItem('organization', JSON.stringify(userData.organization))
+      }
     }
 
-    return response.data
+    return userData
   },
 
   /**
@@ -126,6 +144,14 @@ export const authService = {
   getCurrentUser() {
     const userStr = localStorage.getItem('user')
     return userStr ? JSON.parse(userStr) : null
+  },
+
+  /**
+   * Obtener organización actual del localStorage
+   */
+  getCurrentOrganization() {
+    const orgStr = localStorage.getItem('organization')
+    return orgStr ? JSON.parse(orgStr) : null
   },
 
   /**

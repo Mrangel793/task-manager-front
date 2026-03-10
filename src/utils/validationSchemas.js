@@ -17,6 +17,30 @@ export const loginSchema = yup.object({
 
 // Schema de registro
 export const registerSchema = yup.object({
+  registrationMode: yup
+    .string()
+    .required()
+    .oneOf(['create', 'join']),
+  organization_name: yup
+    .string()
+    .nullable()
+    .when('registrationMode', {
+      is: 'create',
+      then: (schema) => schema
+        .required('El nombre de la organización es requerido')
+        .min(2, 'Mínimo 2 caracteres')
+        .max(100, 'Máximo 100 caracteres'),
+      otherwise: (schema) => schema.nullable()
+    }),
+  invite_code: yup
+    .string()
+    .nullable()
+    .when('registrationMode', {
+      is: 'join',
+      then: (schema) => schema
+        .required('El código de invitación es requerido'),
+      otherwise: (schema) => schema.nullable()
+    }),
   name: yup
     .string()
     .required('El nombre es requerido')

@@ -7,6 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(authService.getCurrentUser())
   const token = ref(localStorage.getItem('accessToken'))
   const isAuthenticated = ref(!!localStorage.getItem('accessToken'))
+  const organization = ref(authService.getCurrentOrganization())
   const loading = ref(false)
   const error = ref(null)
 
@@ -32,6 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     return roleMap[role] || 'user'
   })
+  const userOrganization = computed(() => organization.value)
 
   // Actions
   async function login(credentials) {
@@ -39,10 +41,13 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
+      // Limpiar caché de tareas de la sesión/org anterior
+      localStorage.removeItem('task_store_cache')
       const data = await authService.login(credentials)
       user.value = data.user
       token.value = data.accessToken
       isAuthenticated.value = true
+      organization.value = data.organization || null
       return data
     } catch (err) {
       error.value = err.message
@@ -57,11 +62,14 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
+      // Limpiar caché de tareas al registrar nueva cuenta
+      localStorage.removeItem('task_store_cache')
       const data = await authService.register(userData)
       // Con email-based auth, el usuario está autenticado inmediatamente
       user.value = data.user
       token.value = data.accessToken
       isAuthenticated.value = true
+      organization.value = data.organization || null
       return data
     } catch (err) {
       error.value = err.message
@@ -80,6 +88,9 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = null
       token.value = null
       isAuthenticated.value = false
+      organization.value = null
+      // Limpiar caché de tareas al cerrar sesión
+      localStorage.removeItem('task_store_cache')
     } catch (err) {
       error.value = err.message
       throw err
@@ -95,6 +106,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const data = await authService.getMe()
       user.value = data
+      if (data.organization) {
+        organization.value = data.organization
+      }
       return data
     } catch (err) {
       error.value = err.message
@@ -150,6 +164,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     token,
     isAuthenticated,
+    organization,
     loading,
     error,
     // Getters
@@ -158,6 +173,7 @@ export const useAuthStore = defineStore('auth', () => {
     userEmail,
     userPhone,
     userRole,
+    userOrganization,
     // Actions
     login,
     register,

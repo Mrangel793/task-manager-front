@@ -1,7 +1,7 @@
 <template>
   <div
-    :class="[cardClasses, urgency.cardClass]"
-    class="bg-white rounded-lg shadow-md p-5 cursor-pointer transition-all hover:shadow-lg relative overflow-hidden"
+    :class="[cardClasses, urgency.cardClass, { 'opacity-75': isSyncing, 'border-orange-300': hasSyncError }]"
+    class="bg-white rounded-lg shadow-md p-5 cursor-pointer transition-all hover:shadow-lg relative overflow-hidden border-2 border-transparent"
     @click="handleClick"
   >
     <!-- Badge de urgencia (solo si es urgente o vencida) -->
@@ -15,6 +15,46 @@
         </svg>
         {{ urgency.level === 'overdue' ? 'VENCIDA' : 'URGENTE' }}
       </span>
+    </div>
+
+    <!-- Indicador de sincronización pendiente -->
+    <div
+      v-if="isSyncing"
+      class="absolute top-3 right-3 flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
+    >
+      <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      Sincronizando...
+    </div>
+
+    <!-- Indicador de error de sincronización -->
+    <div
+      v-if="hasSyncError"
+      class="bg-orange-50 border border-orange-200 rounded-md p-3 mb-3"
+    >
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-orange-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-xs font-semibold text-orange-700">Error al sincronizar</span>
+      </div>
+      <p v-if="task._errorMessage" class="text-xs text-orange-600 mb-2">{{ task._errorMessage }}</p>
+      <div class="flex gap-2">
+        <button
+          @click.stop="handleRetry"
+          class="text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded transition-colors"
+        >
+          Reintentar
+        </button>
+        <button
+          @click.stop="handleDiscard"
+          class="text-xs font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 px-3 py-1 rounded transition-colors"
+        >
+          Descartar
+        </button>
+      </div>
     </div>
 
     <!-- Nombre de la tarea -->
@@ -102,6 +142,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores'
+import { useTaskStore } from '@/stores/task.store'
 import { getTaskUrgency } from '@/utils/taskHelpers'
 import TaskStatusDropdown from './TaskStatusDropdown.vue'
 import Avatar from '@/components/common/Avatar.vue'
@@ -120,6 +161,18 @@ const props = defineProps({
 const emit = defineEmits(['status-change', 'click', 'request-complete'])
 
 const authStore = useAuthStore()
+const taskStore = useTaskStore()
+
+const isSyncing = computed(() => props.task._isPending && !props.task._syncError)
+const hasSyncError = computed(() => !!props.task._syncError)
+
+function handleRetry() {
+  taskStore.retrySyncTask(props.task.id).catch(() => {})
+}
+
+function handleDiscard() {
+  taskStore.removePendingTask(props.task.id)
+}
 
 // Calcular urgencia
 const urgency = computed(() => getTaskUrgency(props.task))

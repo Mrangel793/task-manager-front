@@ -102,17 +102,23 @@ export const useTaskStore = defineStore('task', () => {
     try {
       const data = await taskService.getTasks(params)
 
+      // Preservar tareas optimistas que aún no se sincronizaron
+      const pendingOptimistic = tasks.value.filter(t => t._isPending)
+
       // Manejar diferentes estructuras de respuesta del backend
+      let serverTasks
       if (Array.isArray(data)) {
-        tasks.value = data
+        serverTasks = data
       } else if (data.tasks && Array.isArray(data.tasks)) {
-        tasks.value = data.tasks
+        serverTasks = data.tasks
       } else if (data.data && Array.isArray(data.data)) {
-        tasks.value = data.data
+        serverTasks = data.data
       } else {
         console.error('Respuesta inesperada del backend:', data)
-        tasks.value = []
+        serverTasks = []
       }
+
+      tasks.value = [...serverTasks, ...pendingOptimistic]
 
       lastFetchTime.value = Date.now()
       return data
@@ -152,17 +158,81 @@ export const useTaskStore = defineStore('task', () => {
   async function createTask(taskData) {
     error.value = null
 
+    // 1. Crear tarea temporal con ID único
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const optimisticTask = {
+      ...taskData,
+      id: tempId,
+      status: 'Pendiente',
+      created_at: new Date().toISOString(),
+      _isPending: true,
+      _originalData: taskData
+    }
+
+    // 2. Agregar inmediatamente a la lista (UI instantánea)
+    tasks.value.push(optimisticTask)
+
+    // 3. Sincronizar con backend en segundo plano
     try {
       const data = await taskService.createTask(taskData)
-      const task = data.task || data
-      tasks.value.push(task)
+      const serverTask = data.task || data
+      const index = tasks.value.findIndex(t => t.id === tempId)
+      if (index !== -1) {
+        tasks.value[index] = serverTask
+      }
       invalidateCache()
-      return task
+      return serverTask
     } catch (err) {
+      const index = tasks.value.findIndex(t => t.id === tempId)
+      if (index !== -1) {
+        tasks.value[index] = {
+          ...optimisticTask,
+          _syncError: true,
+          _errorMessage: err.message
+        }
+      }
       error.value = err.message
       throw err
     }
   }
+
+  async function retrySyncTask(tempId) {
+    const index = tasks.value.findIndex(t => t.id === tempId)
+    if (index === -1) return
+
+    const task = tasks.value[index]
+    if (!task._originalData) return
+
+    tasks.value[index] = { ...task, _syncError: false, _isPending: true }
+
+    try {
+      const data = await taskService.createTask(task._originalData)
+      const serverTask = data.task || data
+      const idx = tasks.value.findIndex(t => t.id === tempId)
+      if (idx !== -1) {
+        tasks.value[idx] = serverTask
+      }
+      invalidateCache()
+      return serverTask
+    } catch (err) {
+      const idx = tasks.value.findIndex(t => t.id === tempId)
+      if (idx !== -1) {
+        tasks.value[idx] = { ...tasks.value[idx], _syncError: true, _errorMessage: err.message }
+      }
+      throw err
+    }
+  }
+
+  function removePendingTask(tempId) {
+    tasks.value = tasks.value.filter(t => t.id !== tempId)
+  }
+
+  // Re-sincronizar tareas pendientes de sesiones anteriores
+  function retrySyncPendingTasks() {
+    const pending = tasks.value.filter(t => t._isPending && !t._syncError)
+    pending.forEach(t => retrySyncTask(t.id).catch(() => {}))
+  }
+  retrySyncPendingTasks()
 
   async function updateTask(id, taskData) {
     error.value = null
@@ -297,6 +367,8 @@ export const useTaskStore = defineStore('task', () => {
     clearFilters,
     setSelectedTask,
     clearError,
-    clearCurrentTask
+    clearCurrentTask,
+    retrySyncTask,
+    removePendingTask
   }
 })

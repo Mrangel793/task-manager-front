@@ -540,11 +540,15 @@ const handleSaveTask = async (taskData) => {
     if (selectedTaskForEdit.value) {
       await taskStore.updateTask(selectedTaskForEdit.value.id, taskData)
       toast.success('Tarea actualizada correctamente')
+      closeModal()
     } else {
-      await taskStore.createTask(taskData)
+      // Creación optimista: cerrar modal de inmediato, sincronizar en segundo plano
+      closeModal()
       toast.success('Tarea creada correctamente')
+      taskStore.createTask(taskData).catch(() => {
+        toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
+      })
     }
-    closeModal()
   } catch (error) {
     toast.error(error.message || 'Error al guardar la tarea')
   }

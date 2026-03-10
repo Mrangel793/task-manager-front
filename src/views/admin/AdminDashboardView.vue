@@ -1650,11 +1650,15 @@ const handleSaveTask = async (taskData) => {
     if (selectedTaskForEdit.value) {
       await taskStore.updateTask(selectedTaskForEdit.value.id, taskData)
       toast.success('Tarea actualizada correctamente')
+      closeTaskModal()
     } else {
-      await taskStore.createTask(taskData)
+      // Creación optimista: cerrar modal de inmediato, sincronizar en segundo plano
+      closeTaskModal()
       toast.success('Tarea creada correctamente')
+      taskStore.createTask(taskData).catch(() => {
+        toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
+      })
     }
-    closeTaskModal()
   } catch (error) {
     toast.error(error.message || 'Error al guardar la tarea')
   }
@@ -1678,26 +1682,22 @@ const cancelQuickCreate = () => {
   newTaskTitle.value = ''
 }
 
-const handleQuickCreateTask = async () => {
+const handleQuickCreateTask = () => {
   const title = newTaskTitle.value.trim()
   if (!title || isCreatingTask.value) return
 
-  isCreatingTask.value = true
-  try {
-    await taskStore.createTask({ title })
-    toast.success('Tarea creada correctamente')
-    newTaskTitle.value = ''
-    // Mantener el modo activo para crear más tareas
-    nextTick(() => {
-      if (quickCreateInput.value) {
-        quickCreateInput.value.focus()
-      }
-    })
-  } catch (error) {
-    toast.error(error.message || 'Error al crear la tarea')
-  } finally {
-    isCreatingTask.value = false
-  }
+  // Creación optimista: limpiar input de inmediato, sincronizar en segundo plano
+  newTaskTitle.value = ''
+  toast.success('Tarea creada correctamente')
+  taskStore.createTask({ title }).catch(() => {
+    toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
+  })
+  // Mantener el modo activo para crear más tareas
+  nextTick(() => {
+    if (quickCreateInput.value) {
+      quickCreateInput.value.focus()
+    }
+  })
 }
 
 // Función para abrir el modal de tareas por estado
@@ -1867,14 +1867,13 @@ const loadAllUsers = async () => {
 }
 
 // Crear nueva tarea
-const handleCreateTask = async (taskData) => {
-  try {
-    await taskStore.createTask(taskData)
-    isCreateModalOpen.value = false
-    toast.success('Tarea creada correctamente')
-  } catch (error) {
-    toast.error('Error al crear la tarea')
-  }
+const handleCreateTask = (taskData) => {
+  // Creación optimista: cerrar modal de inmediato, sincronizar en segundo plano
+  isCreateModalOpen.value = false
+  toast.success('Tarea creada correctamente')
+  taskStore.createTask(taskData).catch(() => {
+    toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
+  })
 }
 
 // Funciones para pestañas personalizadas

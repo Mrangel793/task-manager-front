@@ -3,9 +3,37 @@
     <div class="max-w-md w-full">
       <div class="bg-white rounded-2xl shadow-xl p-8">
         <!-- Header -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-6">
           <h2 class="text-3xl font-bold text-gray-900">Crear cuenta</h2>
           <p class="mt-2 text-sm text-gray-600">Regístrate para comenzar</p>
+        </div>
+
+        <!-- Tabs: Crear org / Unirse -->
+        <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            :class="[
+              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all',
+              registrationMode === 'create'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+            @click="switchMode('create')"
+          >
+            Crear organización
+          </button>
+          <button
+            type="button"
+            :class="[
+              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all',
+              registrationMode === 'join'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+            @click="switchMode('join')"
+          >
+            Tengo un código
+          </button>
         </div>
 
         <!-- Error message -->
@@ -15,6 +43,32 @@
 
         <!-- Form -->
         <form @submit.prevent="handleSubmit" class="space-y-5">
+          <!-- Organization Name (solo en modo crear) -->
+          <BaseInput
+            v-if="registrationMode === 'create'"
+            v-model="formData.organizationName"
+            type="text"
+            label="Nombre de tu organización"
+            placeholder="Ej: Mi Empresa S.A."
+            :error="errors.organizationName"
+            :disabled="isSubmitting"
+            required
+            @blur="validateSingleField('organization_name')"
+          />
+
+          <!-- Invite Code (solo en modo unirse) -->
+          <BaseInput
+            v-if="registrationMode === 'join'"
+            v-model="formData.inviteCode"
+            type="text"
+            label="Código de invitación"
+            placeholder="Ej: ABC12345"
+            :error="errors.inviteCode"
+            :disabled="isSubmitting"
+            required
+            @blur="validateSingleField('invite_code')"
+          />
+
           <!-- Name Input -->
           <BaseInput
             v-model="formData.name"
@@ -116,7 +170,7 @@
             loading-text="Creando cuenta..."
             full-width
           >
-            Crear cuenta
+            {{ registrationMode === 'create' ? 'Crear organización y cuenta' : 'Unirme y crear cuenta' }}
           </BaseButton>
         </form>
 
@@ -160,7 +214,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
+const registrationMode = ref('create')
+
 const formData = reactive({
+  organizationName: '',
+  inviteCode: '',
   name: '',
   email: '',
   phone: '',
@@ -170,6 +228,8 @@ const formData = reactive({
 })
 
 const errors = reactive({
+  organizationName: '',
+  inviteCode: '',
   name: '',
   email: '',
   phone: '',
@@ -181,7 +241,38 @@ const errors = reactive({
 const isSubmitting = ref(false)
 const submitError = ref('')
 
+const switchMode = (mode) => {
+  registrationMode.value = mode
+  // Limpiar errores de los campos de org al cambiar de tab
+  errors.organizationName = ''
+  errors.inviteCode = ''
+  submitError.value = ''
+}
+
+// Mapeo de nombres de campo del schema a nombres del formData
+const schemaToFormFieldMap = {
+  'organization_name': 'organizationName',
+  'invite_code': 'inviteCode',
+  'confirmPassword': 'confirmPassword',
+  'acceptTerms': 'acceptTerms'
+}
+
+// Construir objeto compatible con el schema de Yup
+const getSchemaData = () => ({
+  registrationMode: registrationMode.value,
+  organization_name: formData.organizationName,
+  invite_code: formData.inviteCode,
+  name: formData.name,
+  email: formData.email,
+  phone: formData.phone,
+  password: formData.password,
+  confirmPassword: formData.confirmPassword,
+  acceptTerms: formData.acceptTerms
+})
+
 const clearErrors = () => {
+  errors.organizationName = ''
+  errors.inviteCode = ''
   errors.name = ''
   errors.email = ''
   errors.phone = ''
@@ -193,10 +284,12 @@ const clearErrors = () => {
 
 const validateSingleField = async (fieldName) => {
   try {
-    await registerSchema.validateAt(fieldName, formData)
-    errors[fieldName] = ''
+    await registerSchema.validateAt(fieldName, getSchemaData())
+    const formField = schemaToFormFieldMap[fieldName] || fieldName
+    errors[formField] = ''
   } catch (error) {
-    errors[fieldName] = error.message
+    const formField = schemaToFormFieldMap[fieldName] || fieldName
+    errors[formField] = error.message
   }
 }
 
@@ -204,11 +297,14 @@ const validateForm = async () => {
   clearErrors()
 
   try {
-    await registerSchema.validate(formData, { abortEarly: false })
+    await registerSchema.validate(getSchemaData(), { abortEarly: false })
     return true
   } catch (validationErrors) {
     validationErrors.inner.forEach(error => {
-      errors[error.path] = error.message
+      const formField = schemaToFormFieldMap[error.path] || error.path
+      if (errors[formField] !== undefined) {
+        errors[formField] = error.message
+      }
     })
     return false
   }
@@ -226,34 +322,50 @@ const handleSubmit = async () => {
   submitError.value = ''
 
   try {
-    await authStore.register({
+    const payload = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone || null,
       password: formData.password,
       password_confirmation: formData.confirmPassword,
       accepted_terms: formData.acceptTerms
-    })
+    }
+
+    // Agregar campo según el modo de registro
+    if (registrationMode.value === 'create') {
+      payload.organization_name = formData.organizationName
+    } else {
+      payload.invite_code = formData.inviteCode
+    }
+
+    const data = await authStore.register(payload)
 
     toast.success('¡Cuenta creada exitosamente!')
 
-    // Redirigir al dashboard (ya está autenticado)
-    router.push('/tasks')
+    // Redirigir según el rol: Admin va al dashboard, Operador a tareas
+    const userRole = (data.user?.role || '').toLowerCase()
+    const isAdmin = userRole === 'admin' || userRole === 'administrador'
+
+    if (isAdmin) {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/tasks')
+    }
   } catch (error) {
     submitError.value = error.message || 'Error al crear la cuenta. Por favor, intenta de nuevo.'
     toast.error('Error al crear la cuenta')
 
     // Mostrar errores específicos de campos si existen
     if (error.data?.errors) {
+      const backendFieldMap = {
+        'accepted_terms': 'acceptTerms',
+        'password_confirmation': 'confirmPassword',
+        'organization_name': 'organizationName',
+        'invite_code': 'inviteCode'
+      }
+
       Object.keys(error.data.errors).forEach(field => {
-        // Mapear nombres de campos del backend a nombres del frontend
-        const fieldMap = {
-          'accepted_terms': 'acceptTerms',
-          'password_confirmation': 'confirmPassword'
-        }
-
-        const frontendField = fieldMap[field] || field
-
+        const frontendField = backendFieldMap[field] || field
         if (errors[frontendField] !== undefined) {
           errors[frontendField] = error.data.errors[field][0]
         }
