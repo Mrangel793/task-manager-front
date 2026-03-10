@@ -863,11 +863,24 @@
               <h3 class="text-xl font-bold text-gray-900">{{ getStatusModalTitle }}</h3>
               <p class="text-sm text-gray-600 mt-1">{{ filteredTasksByStatus.length }} {{ filteredTasksByStatus.length === 1 ? 'tarea' : 'tareas' }}</p>
             </div>
-            <button @click="showTasksByStatusModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div class="flex items-center gap-3">
+              <button 
+                v-if="filteredTasksByStatus.length > 0"
+                @click="handleDeleteAllTasksInModal" 
+                class="text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5"
+                title="Eliminar todas las tareas mostradas"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="hidden sm:inline">Eliminar todas</span>
+              </button>
+              <button @click="showTasksByStatusModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Content -->
@@ -1645,6 +1658,22 @@ const handleDeleteTask = (task) => {
       .catch(() => {
         toast.error('Error al eliminar la tarea')
       })
+  }
+}
+
+// Función para eliminar todas las tareas mostradas en el modal actual
+const handleDeleteAllTasksInModal = async () => {
+  const tasksToDelete = filteredTasksByStatus.value;
+  if (tasksToDelete.length === 0) return;
+
+  if (confirm(`¿Estás seguro de eliminar TODAS las ${tasksToDelete.length} tareas mostradas actualmente ("${getStatusModalTitle.value}")? Esta acción NO se puede deshacer.`)) {
+    try {
+      const promises = tasksToDelete.map(task => taskStore.deleteTask(task.id));
+      await Promise.allSettled(promises);
+      toast.success('Tareas eliminadas correctamente');
+    } catch (error) {
+      toast.error('Ocurrió un error al intentar eliminar algunas tareas');
+    }
   }
 }
 
