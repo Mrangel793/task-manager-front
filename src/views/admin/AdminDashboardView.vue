@@ -184,17 +184,18 @@
                   <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
                 </div>
                 <div class="flex-1 relative">
-                  <input
+                  <textarea
                     ref="quickCreateInput"
                     v-model="newTaskTitle"
-                    type="text"
                     :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[42px] max-h-[150px]"
                     :disabled="isCreatingTask"
-                    @keyup.enter="handleQuickCreateTask"
-                    @keyup.escape="cancelQuickCreate"
+                    rows="1"
+                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
+                    @keydown.enter.prevent="handleQuickCreateTask"
+                    @keydown.escape.prevent="cancelQuickCreate"
                     autofocus
-                  />
+                  ></textarea>
                   <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
                     <VoiceInputButton
                       v-model="newTaskTitle"
@@ -374,17 +375,18 @@
                   <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
                 </div>
                 <div class="flex-1 relative">
-                  <input
+                  <textarea
                     ref="quickCreateInput"
                     v-model="newTaskTitle"
-                    type="text"
                     :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[42px] max-h-[150px]"
                     :disabled="isCreatingTask"
-                    @keyup.enter="handleQuickCreateTask"
-                    @keyup.escape="cancelQuickCreate"
+                    rows="1"
+                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
+                    @keydown.enter.prevent="handleQuickCreateTask"
+                    @keydown.escape.prevent="cancelQuickCreate"
                     autofocus
-                  />
+                  ></textarea>
                   <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
                     <VoiceInputButton
                       v-model="newTaskTitle"
@@ -2126,6 +2128,22 @@ const getTabTooltip = (tab) => {
 watch([taskFilters, currentTab], () => {
   currentPage.value = 1
 }, { deep: true })
+
+// Watcher para resetear altura del textarea cuando se limpia
+watch(newTaskTitle, (newVal) => {
+  if (!newVal) {
+    nextTick(() => {
+      const inputs = Array.isArray(quickCreateInput.value)
+        ? quickCreateInput.value
+        : [quickCreateInput.value]
+      inputs.forEach(el => {
+        if (el && el.style) {
+          el.style.height = 'auto'
+        }
+      })
+    })
+  }
+})
 
 onMounted(() => {
   loadData()
