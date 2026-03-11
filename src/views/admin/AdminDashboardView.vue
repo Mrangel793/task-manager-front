@@ -903,17 +903,19 @@
                 :class="getTaskRowClass(task)"
               >
                 <div class="flex items-center space-x-4 flex-1 min-w-0">
-                  <!-- Checkbox visual -->
-                  <div
-                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                  <!-- Checkbox para completar tarea -->
+                  <button
+                    @click.stop="handleCompleteTaskInModal(task)"
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors hover:border-green-400 hover:bg-green-50"
                     :class="task.status === 'Completada'
                       ? 'bg-green-500 border-green-500'
                       : 'border-gray-300'"
+                    :title="task.status === 'Completada' ? 'Ya completada' : 'Marcar como completada'"
                   >
                     <svg v-if="task.status === 'Completada'" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
-                  </div>
+                  </button>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 break-words" :class="{ 'line-through text-gray-400': task.status === 'Completada' }">
                       {{ task.title }}
@@ -1665,17 +1667,38 @@ const handleDeleteTask = (task) => {
 
 // Función para eliminar todas las tareas mostradas en el modal actual
 const handleDeleteAllTasksInModal = async () => {
-  const tasksToDelete = filteredTasksByStatus.value;
+  const tasksToDelete = [...filteredTasksByStatus.value];
   if (tasksToDelete.length === 0) return;
 
-  if (confirm(`¿Estás seguro de eliminar TODAS las ${tasksToDelete.length} tareas mostradas actualmente ("${getStatusModalTitle.value}")? Esta acción NO se puede deshacer.`)) {
+  if (!confirm(`¿Estás seguro de eliminar TODAS las ${tasksToDelete.length} tareas mostradas actualmente ("${getStatusModalTitle.value}")? Esta acción NO se puede deshacer.`)) return;
+
+  let deleted = 0
+  let failed = 0
+
+  for (const task of tasksToDelete) {
     try {
-      const promises = tasksToDelete.map(task => taskStore.deleteTask(task.id));
-      await Promise.allSettled(promises);
-      toast.success('Tareas eliminadas correctamente');
-    } catch (error) {
-      toast.error('Ocurrió un error al intentar eliminar algunas tareas');
+      await taskStore.deleteTask(task.id)
+      deleted++
+    } catch {
+      failed++
     }
+  }
+
+  if (failed === 0) {
+    toast.success(`${deleted} tareas eliminadas correctamente`)
+  } else {
+    toast.warning(`${deleted} eliminadas, ${failed} fallaron. Intenta de nuevo.`)
+  }
+}
+
+// Marcar tarea como completada desde el modal
+const handleCompleteTaskInModal = async (task) => {
+  if (task.status === 'Completada') return
+  try {
+    await taskStore.updateTaskStatus(task.id, 'Completada')
+    toast.success('Tarea completada')
+  } catch {
+    toast.error('Error al completar la tarea')
   }
 }
 
