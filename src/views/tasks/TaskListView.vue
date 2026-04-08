@@ -158,8 +158,7 @@
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Table Header -->
           <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-5 lg:col-span-6">Tarea</div>
-            <div class="col-span-4 sm:hidden">Asignado</div>
+            <div class="col-span-9 sm:col-span-5 lg:col-span-6">Tarea</div>
             <div class="col-span-3 hidden sm:block">Asignado</div>
             <div class="hidden sm:block sm:col-span-2">Estado</div>
             <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
@@ -170,14 +169,14 @@
             <div
               v-for="task in paginatedTasks"
               :key="task.id"
-              @click="handleTaskClick(task)"
+              @click="activeMenuTaskId = null; handleTaskClick(task)"
               class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
               :class="{
                 'bg-green-50/50': task.status === 'Completada' || task.status === 'Por Verificar'
               }"
             >
               <!-- Task name with checkbox -->
-              <div class="col-span-5 lg:col-span-6 flex items-start min-w-0">
+              <div class="col-span-9 sm:col-span-5 lg:col-span-6 flex items-start min-w-0">
                 <button
                   @click.stop="handleRequestComplete({ task })"
                   class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 mt-0.5 flex items-center justify-center transition-colors"
@@ -209,22 +208,16 @@
                       </svg>
                       Completada
                     </span>
+                    <!-- Assignee badge (mobile only) -->
+                    <span v-if="getAssigneeName(task)" class="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500">
+                      <span
+                        class="w-4 h-4 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+                        :class="getAvatarColor(getAssigneeName(task))"
+                      >{{ getInitials(getAssigneeName(task)) }}</span>
+                      {{ getAssigneeName(task) }}
+                    </span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Assignee mobile -->
-              <div class="col-span-4 sm:hidden" @click.stop>
-                <select
-                  :value="getTaskAssigneeId(task)"
-                  @change="handleAssigneeChange(task, $event.target.value)"
-                  class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full bg-white truncate"
-                >
-                  <option value="" disabled>Sin asignar</option>
-                  <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.name }}
-                  </option>
-                </select>
               </div>
 
               <!-- Assignee desktop -->
@@ -262,28 +255,77 @@
                 </select>
               </div>
 
-              <!-- Actions -->
-              <div class="col-span-3 sm:col-span-2 lg:col-span-1 flex items-center justify-end sm:justify-center gap-0.5 sm:gap-1" @click.stop>
-                <!-- Edit button -->
+              <!-- Actions desktop -->
+              <div class="hidden sm:flex col-span-2 lg:col-span-1 items-center justify-center gap-0.5 sm:gap-1" @click.stop>
                 <button
                   @click="handleEditTask(task)"
-                  class="p-1 sm:p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Editar tarea"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <!-- Delete button -->
                 <button
                   @click="handleDeleteTask(task)"
-                  class="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   title="Eliminar tarea"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
+              </div>
+
+              <!-- Actions mobile (⋮ menu) -->
+              <div class="sm:hidden col-span-3 flex items-center justify-end relative" @click.stop>
+                <button
+                  @click.stop="toggleMenu(task.id)"
+                  class="p-2 text-gray-400 hover:text-gray-700 rounded-lg transition-colors"
+                  title="Opciones"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+                <!-- Dropdown menu -->
+                <div
+                  v-if="activeMenuTaskId === task.id"
+                  class="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[160px]"
+                  @click.stop
+                >
+                  <button
+                    @click="handleEditTask(task); activeMenuTaskId = null"
+                    class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5"
+                  >
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar
+                  </button>
+                  <div class="px-4 py-2 border-t border-gray-100" @click.stop>
+                    <p class="text-xs text-gray-400 mb-1.5">Reasignar a</p>
+                    <select
+                      :value="getTaskAssigneeId(task)"
+                      @change="handleAssigneeChange(task, $event.target.value); activeMenuTaskId = null"
+                      class="text-sm w-full border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-primary-500 bg-white"
+                    >
+                      <option value="" disabled>Sin asignar</option>
+                      <option v-for="user in users" :key="user.id" :value="user.id">
+                        {{ user.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <button
+                    @click="handleDeleteTask(task); activeMenuTaskId = null"
+                    class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 border-t border-gray-100"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -631,6 +673,11 @@ const loading = ref(false)
 const isModalOpen = ref(false)
 const isTabModalOpen = ref(false)
 const selectedTaskForEdit = ref(null)
+const activeMenuTaskId = ref(null)
+
+const toggleMenu = (taskId) => {
+  activeMenuTaskId.value = activeMenuTaskId.value === taskId ? null : taskId
+}
 const users = ref(loadCached(TL_USERS_KEY))
 const customTabs = ref(loadCached(TL_TABS_KEY))
 
