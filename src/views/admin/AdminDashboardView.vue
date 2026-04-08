@@ -188,7 +188,7 @@
                     ref="quickCreateInput"
                     v-model="newTaskTitle"
                     :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[42px] max-h-[150px]"
+                    class="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-9 sm:pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[36px] sm:min-h-[42px] max-h-[120px] sm:max-h-[150px]"
                     :disabled="isCreatingTask"
                     rows="1"
                     @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
@@ -379,7 +379,7 @@
                     ref="quickCreateInput"
                     v-model="newTaskTitle"
                     :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[42px] max-h-[150px]"
+                    class="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-9 sm:pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[36px] sm:min-h-[42px] max-h-[120px] sm:max-h-[150px]"
                     :disabled="isCreatingTask"
                     rows="1"
                     @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
@@ -866,9 +866,9 @@
               <p class="text-sm text-gray-600 mt-1">{{ filteredTasksByStatus.length }} {{ filteredTasksByStatus.length === 1 ? 'tarea' : 'tareas' }}</p>
             </div>
             <div class="flex items-center gap-3">
-              <button 
+              <!-- <button
                 v-if="filteredTasksByStatus.length > 0"
-                @click="handleDeleteAllTasksInModal" 
+                @click="handleDeleteAllTasksInModal"
                 class="text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5"
                 title="Eliminar todas las tareas mostradas"
               >
@@ -876,7 +876,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 <span class="hidden sm:inline">Eliminar todas</span>
-              </button>
+              </button> -->
               <button @click="showTasksByStatusModal = false" class="text-gray-400 hover:text-gray-600 p-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -929,14 +929,14 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4">
-                  <!-- Delete button -->
+                  <!-- Edit button -->
                   <button
-                    @click.stop="handleDeleteTask(task)"
-                    class="p-2 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                    title="Eliminar tarea"
+                    @click.stop="handleEditTaskInModal(task)"
+                    class="p-2 sm:p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                    title="Editar tarea"
                   >
                     <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                   <svg class="w-4 h-4 text-gray-400 flex-shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1702,6 +1702,12 @@ const handleCompleteTaskInModal = async (task) => {
   }
 }
 
+// Editar tarea desde el modal de tareas por estado
+const handleEditTaskInModal = (task) => {
+  showTasksByStatusModal.value = false
+  handleEditTask(task)
+}
+
 // Cerrar modal de tarea
 const closeTaskModal = () => {
   isCreateModalOpen.value = false
@@ -2072,8 +2078,8 @@ const applyCustomTabFilters = (tasks, tab) => {
 
   if (tab.filters.assigneeIds && tab.filters.assigneeIds.length > 0) {
     filtered = filtered.filter(t => {
-      const assigneeId = t.assignee?.id || t.assignee_id || t.assigned_to
-      return tab.filters.assigneeIds.includes(assigneeId)
+      const assigneeId = t.assignee?.id ?? t.assignee_id ?? t.assigned_to
+      return tab.filters.assigneeIds.map(String).includes(String(assigneeId))
     })
   }
 
@@ -2093,7 +2099,7 @@ const getTabAssigneeNames = (tab) => {
 
   return tab.filters.assigneeIds
     .map(id => {
-      const user = allUsers.value.find(u => u.id === id)
+      const user = allUsers.value.find(u => String(u.id) === String(id))
       return user ? user.name : null
     })
     .filter(name => name !== null)
@@ -2106,7 +2112,7 @@ const getTabAssigneeUsers = (tab) => {
   }
 
   return tab.filters.assigneeIds
-    .map(id => allUsers.value.find(u => u.id === id))
+    .map(id => allUsers.value.find(u => String(u.id) === String(id)))
     .filter(user => user !== undefined)
 }
 
@@ -2152,20 +2158,19 @@ watch([taskFilters, currentTab], () => {
   currentPage.value = 1
 }, { deep: true })
 
-// Watcher para resetear altura del textarea cuando se limpia
-watch(newTaskTitle, (newVal) => {
-  if (!newVal) {
-    nextTick(() => {
-      const inputs = Array.isArray(quickCreateInput.value)
-        ? quickCreateInput.value
-        : [quickCreateInput.value]
-      inputs.forEach(el => {
-        if (el && el.style) {
-          el.style.height = 'auto'
-        }
-      })
+// Watcher para ajustar altura del textarea cuando cambia el contenido
+watch(newTaskTitle, () => {
+  nextTick(() => {
+    const inputs = Array.isArray(quickCreateInput.value)
+      ? quickCreateInput.value
+      : [quickCreateInput.value]
+    inputs.forEach(el => {
+      if (el && el.style) {
+        el.style.height = 'auto'
+        el.style.height = el.scrollHeight + 'px'
+      }
     })
-  }
+  })
 })
 
 onMounted(() => {

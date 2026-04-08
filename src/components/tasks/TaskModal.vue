@@ -26,24 +26,33 @@
         <!-- Form -->
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Título -->
-          <BaseInput
-            v-model="formData.title"
-            label="Título"
-            placeholder="Título de la tarea"
-            :error="errors.title"
-            :disabled="isSubmitting"
-            required
-            @blur="validateSingleField('title')"
-          >
-            <template #icon-right>
-              <VoiceInputButton
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Título <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <textarea
+                ref="titleInput"
                 v-model="formData.title"
+                placeholder="Título de la tarea"
+                class="input-field w-full resize-none overflow-hidden pr-10 min-h-[42px]"
+                :class="{ 'border-red-500 focus:ring-red-500 focus:border-red-500': errors.title }"
                 :disabled="isSubmitting"
-                :show-status="false"
-                size="small"
-              />
-            </template>
-          </BaseInput>
+                rows="1"
+                @input="autoResizeTitle"
+                @blur="validateSingleField('title')"
+              ></textarea>
+              <div class="absolute top-2 right-2">
+                <VoiceInputButton
+                  v-model="formData.title"
+                  :disabled="isSubmitting"
+                  :show-status="false"
+                  size="small"
+                />
+              </div>
+            </div>
+            <p v-if="errors.title" class="mt-1 text-sm text-red-600">{{ errors.title }}</p>
+          </div>
 
           <!-- Descripción -->
           <div>
@@ -154,10 +163,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores'
 import { taskSchema, taskSchemaAdmin } from '@/utils/validationSchemas'
-import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import VoiceInputButton from '@/components/common/VoiceInputButton.vue'
 
@@ -198,6 +206,7 @@ const errors = reactive({
   assignee_id: ''
 })
 
+const titleInput = ref(null)
 const isSubmitting = ref(false)
 const submitError = ref('')
 const voiceStatus = ref('')
@@ -248,6 +257,13 @@ const ensureAssignee = () => {
 const handleVoiceStatus = ({ status, message }) => {
   voiceStatusType.value = status
   voiceStatus.value = message
+}
+
+const autoResizeTitle = () => {
+  if (titleInput.value) {
+    titleInput.value.style.height = 'auto'
+    titleInput.value.style.height = titleInput.value.scrollHeight + 'px'
+  }
 }
 
 const clearErrors = () => {
@@ -320,6 +336,11 @@ const resetForm = () => {
   clearErrors()
 }
 
+// Auto-resize del título cuando cambia (ej: por voz)
+watch(() => formData.title, () => {
+  nextTick(autoResizeTitle)
+})
+
 // Cargar datos si es edición
 watch(() => props.task, (newTask) => {
   if (newTask) {
@@ -327,6 +348,7 @@ watch(() => props.task, (newTask) => {
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
     formData.assignee_id = newTask.assignee?.id || newTask.assignee_id || newTask.assigned_to || null
+    nextTick(autoResizeTitle)
   } else {
     resetForm()
     // Si es operario, auto-asignarse al crear una nueva tarea
@@ -343,6 +365,7 @@ watch(() => props.isOpen, (isOpen) => {
     if (!props.task && authStore.userRole === 'operario') {
       ensureAssignee()
     }
+    nextTick(autoResizeTitle)
   }
 })
 </script>

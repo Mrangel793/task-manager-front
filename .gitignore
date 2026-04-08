@@ -67,3 +67,5 @@ package-lock.json.backup
 yarn.lock
 pnpm-lock.yaml
 nul
+
+claude.md

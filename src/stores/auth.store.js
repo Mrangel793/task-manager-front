@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { authService } from '@/services'
+import { authService, userService } from '@/services'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -41,8 +41,11 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      // Limpiar caché de tareas de la sesión/org anterior
+      // Limpiar caché de la sesión/org anterior
       localStorage.removeItem('task_store_cache')
+      localStorage.removeItem('admin_users_cache')
+      localStorage.removeItem('admin_tabs_cache')
+      userService.clearOperatorsCache()
       const data = await authService.login(credentials)
       user.value = data.user
       token.value = data.accessToken
@@ -62,8 +65,11 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      // Limpiar caché de tareas al registrar nueva cuenta
+      // Limpiar caché al registrar nueva cuenta
       localStorage.removeItem('task_store_cache')
+      localStorage.removeItem('admin_users_cache')
+      localStorage.removeItem('admin_tabs_cache')
+      userService.clearOperatorsCache()
       const data = await authService.register(userData)
       // Con email-based auth, el usuario está autenticado inmediatamente
       user.value = data.user
@@ -89,8 +95,11 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = null
       isAuthenticated.value = false
       organization.value = null
-      // Limpiar caché de tareas al cerrar sesión
+      // Limpiar toda la caché al cerrar sesión
       localStorage.removeItem('task_store_cache')
+      localStorage.removeItem('admin_users_cache')
+      localStorage.removeItem('admin_tabs_cache')
+      userService.clearOperatorsCache()
     } catch (err) {
       error.value = err.message
       throw err
