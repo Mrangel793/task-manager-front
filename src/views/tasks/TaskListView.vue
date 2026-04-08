@@ -157,11 +157,14 @@
         <!-- Tasks List (Asana style) -->
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Table Header -->
-          <div class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <div class="col-span-9 sm:col-span-5 lg:col-span-6">Tarea</div>
-            <div class="col-span-3 hidden sm:block">Asignado</div>
-            <div class="hidden sm:block sm:col-span-2">Estado</div>
-            <div class="col-span-3 sm:col-span-2 lg:col-span-1 text-center">Acciones</div>
+          <div v-if="!isMobile" class="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <div class="col-span-6">Tarea</div>
+            <div class="col-span-3">Asignado</div>
+            <div class="col-span-2">Estado</div>
+            <div class="col-span-1 text-center">Acciones</div>
+          </div>
+          <div v-else class="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Tareas
           </div>
 
           <!-- Task Rows -->
@@ -169,164 +172,205 @@
             <div
               v-for="task in paginatedTasks"
               :key="task.id"
-              @click="activeMenuTaskId = null; handleTaskClick(task)"
-              class="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-4 py-3 items-center hover:bg-gray-50 cursor-pointer transition-colors group"
-              :class="{
-                'bg-green-50/50': task.status === 'Completada' || task.status === 'Por Verificar'
-              }"
+              class="hover:bg-gray-50 transition-colors"
+              :class="{ 'bg-green-50/50': task.status === 'Completada' || task.status === 'Por Verificar' }"
             >
-              <!-- Task name with checkbox -->
-              <div class="col-span-9 sm:col-span-5 lg:col-span-6 flex items-start min-w-0">
+              <!-- ===== MOBILE LAYOUT ===== -->
+              <div
+                v-if="isMobile"
+                class="flex items-center gap-2 px-3 py-3 cursor-pointer"
+                @click="activeMenuTaskId = null; handleTaskClick(task)"
+              >
+                <!-- Checkbox -->
                 <button
                   @click.stop="handleRequestComplete({ task })"
-                  class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-2 sm:mr-3 mt-0.5 flex items-center justify-center transition-colors"
+                  class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
                   :class="task.status === 'Completada'
                     ? 'bg-green-500 border-green-500 text-white'
-                    : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
+                    : 'border-gray-300 hover:border-green-400'"
                 >
                   <svg v-if="task.status === 'Completada'" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                 </button>
-                <div class="min-w-0 flex-1">
+
+                <!-- Title + date + assignee -->
+                <div class="flex-1 min-w-0">
                   <span
-                    class="block text-sm break-words"
+                    class="block text-sm break-words leading-snug"
                     :class="task.status === 'Completada' ? 'text-gray-400 line-through' : 'text-gray-900 font-medium'"
                   >
                     {{ task.title }}
                   </span>
-                  <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span v-if="task.due_date" class="inline-flex items-center gap-1 text-xs" :class="getDueDateColor(task)">
+                  <div class="mt-1 space-y-0.5">
+                    <div v-if="task.due_date" class="flex items-center gap-1 text-xs" :class="getDueDateColor(task)">
                       <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       {{ formatDueDate(task.due_date) }}
-                    </span>
-                    <span v-if="task.status === 'Por Verificar'" class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
-                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                      </svg>
-                      Completada
-                    </span>
-                    <!-- Assignee badge (mobile only) -->
-                    <span v-if="getAssigneeName(task)" class="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500">
+                      <span v-if="task.status === 'Por Verificar'" class="ml-1 text-green-600 font-medium">· Completada</span>
+                    </div>
+                    <div v-if="getAssigneeName(task)" class="flex items-center gap-1 text-xs text-gray-500">
                       <span
                         class="w-4 h-4 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
                         :class="getAvatarColor(getAssigneeName(task))"
                       >{{ getInitials(getAssigneeName(task)) }}</span>
                       {{ getAssigneeName(task) }}
-                    </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ⋮ menu -->
+                <div class="relative flex-shrink-0" @click.stop>
+                  <button
+                    @click.stop="toggleMenu(task.id)"
+                    class="p-2 text-gray-400 hover:text-gray-700 rounded-lg transition-colors"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
+                  </button>
+                  <div
+                    v-if="activeMenuTaskId === task.id"
+                    class="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[160px]"
+                    @click.stop
+                  >
+                    <button
+                      @click="handleEditTask(task); activeMenuTaskId = null"
+                      class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5"
+                    >
+                      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Editar
+                    </button>
+                    <div v-if="canAssign" class="px-4 py-2 border-t border-gray-100" @click.stop>
+                      <p class="text-xs text-gray-400 mb-1.5">Reasignar a</p>
+                      <select
+                        :value="getTaskAssigneeId(task)"
+                        @change="handleAssigneeChange(task, $event.target.value); activeMenuTaskId = null"
+                        class="text-sm w-full border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-primary-500 bg-white"
+                      >
+                        <option value="" disabled>Sin asignar</option>
+                        <option v-for="user in users" :key="user.id" :value="user.id">
+                          {{ user.name }}
+                        </option>
+                      </select>
+                    </div>
+                    <button
+                      @click="handleDeleteTask(task); activeMenuTaskId = null"
+                      class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 border-t border-gray-100"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Eliminar
+                    </button>
                   </div>
                 </div>
               </div>
 
-              <!-- Assignee desktop -->
-              <div class="col-span-3 hidden sm:flex items-center" @click.stop>
-                <div
-                  class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
-                  :class="getAvatarColor(getAssigneeName(task))"
-                >
-                  {{ getInitials(getAssigneeName(task)) }}
-                </div>
-                <select
-                  :value="getTaskAssigneeId(task)"
-                  @change="handleAssigneeChange(task, $event.target.value)"
-                  class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-1 min-w-0 bg-white truncate"
-                >
-                  <option value="" disabled>Sin asignar</option>
-                  <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Status (hidden on mobile) -->
-              <div class="hidden sm:block sm:col-span-2" @click.stop>
-                <select
-                  v-model="task.status"
-                  @change="handleStatusChangeSelect(task)"
-                  class="text-xs font-medium px-1 sm:px-2 py-1 rounded border-0 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full"
-                  :class="getStatusSelectClass(task.status)"
-                >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="En Progreso">En Progreso</option>
-                  <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
-                  <option value="Completada">Completada</option>
-                </select>
-              </div>
-
-              <!-- Actions desktop -->
-              <div class="hidden sm:flex col-span-2 lg:col-span-1 items-center justify-center gap-0.5 sm:gap-1" @click.stop>
-                <button
-                  @click="handleEditTask(task)"
-                  class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Editar tarea"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  @click="handleDeleteTask(task)"
-                  class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Eliminar tarea"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Actions mobile (⋮ menu) -->
-              <div class="sm:hidden col-span-3 flex items-center justify-end relative" @click.stop>
-                <button
-                  @click.stop="toggleMenu(task.id)"
-                  class="p-2 text-gray-400 hover:text-gray-700 rounded-lg transition-colors"
-                  title="Opciones"
-                >
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                  </svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div
-                  v-if="activeMenuTaskId === task.id"
-                  class="absolute right-0 top-9 z-20 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[160px]"
-                  @click.stop
-                >
+              <!-- ===== DESKTOP LAYOUT ===== -->
+              <div
+                v-else
+                class="grid grid-cols-12 gap-4 px-4 py-3 items-center cursor-pointer group"
+                @click="handleTaskClick(task)"
+              >
+                <!-- Task name + date -->
+                <div class="col-span-6 flex items-start min-w-0">
                   <button
-                    @click="handleEditTask(task); activeMenuTaskId = null"
-                    class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5"
+                    @click.stop="handleRequestComplete({ task })"
+                    class="flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3 mt-0.5 flex items-center justify-center transition-colors"
+                    :class="task.status === 'Completada'
+                      ? 'bg-green-500 border-green-500 text-white'
+                      : 'border-gray-300 hover:border-green-400 group-hover:border-green-400'"
                   >
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg v-if="task.status === 'Completada'" class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div class="min-w-0 flex-1">
+                    <span
+                      class="block text-sm break-words"
+                      :class="task.status === 'Completada' ? 'text-gray-400 line-through' : 'text-gray-900 font-medium'"
+                    >
+                      {{ task.title }}
+                    </span>
+                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span v-if="task.due_date" class="inline-flex items-center gap-1 text-xs" :class="getDueDateColor(task)">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {{ formatDueDate(task.due_date) }}
+                      </span>
+                      <span v-if="task.status === 'Por Verificar'" class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Completada
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assignee -->
+                <div class="col-span-3 flex items-center" @click.stop>
+                  <div
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
+                    :class="getAvatarColor(getAssigneeName(task))"
+                  >
+                    {{ getInitials(getAssigneeName(task)) }}
+                  </div>
+                  <select
+                    :value="getTaskAssigneeId(task)"
+                    @change="handleAssigneeChange(task, $event.target.value)"
+                    class="text-xs font-medium px-1 py-1 rounded border border-gray-200 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-1 min-w-0 bg-white truncate"
+                  >
+                    <option value="" disabled>Sin asignar</option>
+                    <option v-for="user in users" :key="user.id" :value="user.id">
+                      {{ user.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Status -->
+                <div class="col-span-2" @click.stop>
+                  <select
+                    v-model="task.status"
+                    @change="handleStatusChangeSelect(task)"
+                    class="text-xs font-medium px-2 py-1 rounded border-0 focus:ring-2 focus:ring-primary-500 cursor-pointer w-full"
+                    :class="getStatusSelectClass(task.status)"
+                  >
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
+                    <option value="Completada">Completada</option>
+                  </select>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-span-2 lg:col-span-1 flex items-center justify-center gap-1" @click.stop>
+                  <button
+                    @click="handleEditTask(task)"
+                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar tarea"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Editar
                   </button>
-                  <div class="px-4 py-2 border-t border-gray-100" @click.stop>
-                    <p class="text-xs text-gray-400 mb-1.5">Reasignar a</p>
-                    <select
-                      :value="getTaskAssigneeId(task)"
-                      @change="handleAssigneeChange(task, $event.target.value); activeMenuTaskId = null"
-                      class="text-sm w-full border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-primary-500 bg-white"
-                    >
-                      <option value="" disabled>Sin asignar</option>
-                      <option v-for="user in users" :key="user.id" :value="user.id">
-                        {{ user.name }}
-                      </option>
-                    </select>
-                  </div>
                   <button
-                    @click="handleDeleteTask(task); activeMenuTaskId = null"
-                    class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 border-t border-gray-100"
+                    @click="handleDeleteTask(task)"
+                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Eliminar tarea"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    Eliminar
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -632,7 +676,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore, useAuthStore } from '@/stores'
 import { userService, tabService } from '@/services'
@@ -645,6 +689,13 @@ const router = useRouter()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const toast = useToast()
+
+// Detección de mobile por ancho de ventana (más confiable que CSS breakpoints)
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 640)
+const onResize = () => { windowWidth.value = window.innerWidth }
+onMounted(() => window.addEventListener('resize', onResize))
+onUnmounted(() => window.removeEventListener('resize', onResize))
 
 // Helpers para caché localStorage
 const TL_USERS_KEY = 'tasklist_users_cache'
@@ -885,6 +936,11 @@ const getTabTooltip = (tab) => {
 const canCreateTask = computed(() => {
   const role = authStore.userRole
   return role === 'admin' || role === 'supervisor' || role === 'operario'
+})
+
+const canAssign = computed(() => {
+  const role = authStore.userRole
+  return role === 'admin' || role === 'supervisor'
 })
 
 const hasActiveFilters = computed(() => {

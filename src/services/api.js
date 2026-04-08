@@ -69,12 +69,13 @@ api.interceptors.response.use(
           throw new Error('No new token received')
         }
       } catch (refreshError) {
-        // Si falla el refresh, hacer logout
+        // Si falla el refresh, limpiar sesión y notificar a la app
+        console.error('[api] Token refresh failed for:', originalRequest.url, refreshError)
         localStorage.removeItem('accessToken')
         localStorage.removeItem('user')
 
-        // Redirigir al login
-        window.location.href = '/login'
+        // Notificar a la app para que actualice el estado y redirija
+        window.dispatchEvent(new CustomEvent('auth:session-expired'))
 
         return Promise.reject(refreshError)
       }
