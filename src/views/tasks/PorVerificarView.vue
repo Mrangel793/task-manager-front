@@ -5,12 +5,12 @@
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Tareas Completadas</h1>
         <p class="text-sm text-gray-600 mt-1">
-          {{ completedTasks.length }} {{ completedTasks.length === 1 ? 'tarea completada' : 'tareas completadas' }}
+          {{ tasksToShow.length }} {{ tasksToShow.length === 1 ? 'tarea completada' : 'tareas completadas' }}
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
         <button
-          v-if="completedTasks.length > 0"
+          v-if="tasksToShow.length > 0"
           @click="handleDeleteAll"
           :disabled="deleting"
           class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
@@ -36,10 +36,10 @@
     </div>
 
     <!-- Task list -->
-    <div v-else-if="completedTasks.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+    <div v-else-if="tasksToShow.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
       <div class="divide-y divide-gray-200">
         <div
-          v-for="task in completedTasks"
+          v-for="task in tasksToShow"
           :key="task.id"
           class="relative group"
         >
@@ -49,8 +49,15 @@
           >
             <div class="flex items-center gap-4">
               <!-- Check icon -->
-              <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div
+                class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                :class="task.status === 'Completada' ? 'bg-green-100' : 'bg-amber-100'"
+              >
+                <svg
+                  class="w-4 h-4"
+                  :class="task.status === 'Completada' ? 'text-green-600' : 'text-amber-600'"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -58,7 +65,15 @@
               <!-- Task info -->
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-500 line-through truncate">{{ task.title }}</p>
-                <div class="flex items-center gap-3 mt-1">
+                <div class="flex items-center gap-3 mt-1 flex-wrap">
+                  <!-- Badge de estado para operario -->
+                  <span
+                    v-if="isOperario"
+                    class="text-xs font-medium px-2 py-0.5 rounded-full"
+                    :class="task.status === 'Completada' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+                  >
+                    {{ task.status === 'Completada' ? 'Verificada' : 'Pendiente verificación' }}
+                  </span>
                   <span class="text-xs text-gray-400 flex items-center">
                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -111,14 +126,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTaskStore } from '@/stores'
+import { useTaskStore, useAuthStore } from '@/stores'
 import { useToast } from '@/composables/useToast'
 
 const taskStore = useTaskStore()
+const authStore = useAuthStore()
 const toast = useToast()
 const { completedTasks } = storeToRefs(taskStore)
+
+const isOperario = computed(() => authStore.userRole === 'operario')
+
+// Para operario: mostrar 'Por Verificar' (entregadas) + 'Completada' (verificadas por admin)
+// Para admin: solo 'Completada'
+const tasksToShow = computed(() => {
+  if (isOperario.value) {
+    return taskStore.tasks.filter(t => t.status === 'Completada' || t.status === 'Por Verificar')
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  }
+  return completedTasks.value
+})
 
 const loading = ref(false)
 const deleting = ref(false)
@@ -151,13 +179,13 @@ const handleDeleteOne = async (task) => {
 }
 
 const handleDeleteAll = async () => {
-  if (!confirm(`¿Estás seguro de eliminar las ${completedTasks.value.length} tareas completadas? Esta acción no se puede deshacer.`)) {
+  if (!confirm(`¿Estás seguro de eliminar las ${tasksToShow.value.length} tareas completadas? Esta acción no se puede deshacer.`)) {
     return
   }
 
   deleting.value = true
   try {
-    const ids = completedTasks.value.map(t => t.id)
+    const ids = tasksToShow.value.map(t => t.id)
     await Promise.all(ids.map(id => taskStore.deleteTask(id)))
     toast.success('Todas las tareas completadas fueron eliminadas')
   } catch (error) {

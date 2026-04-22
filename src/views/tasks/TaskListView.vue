@@ -4,7 +4,7 @@
     <div class="mb-6">
       <div class="flex items-center gap-2">
         <p class="text-sm text-gray-600">
-          {{ activeTasksCount }} tareas activas • {{ tasksCount.pending }} pendientes • {{ tasksCount.porVerificar }} por verificar
+          {{ activeTasksCount }} tareas activas • {{ tasksCount.pending }} pendientes
         </p>
         <div v-if="loading && taskStore.tasks.length > 0" class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
       </div>
@@ -59,16 +59,27 @@
                 {{ getTabAssigneeNames(tab).length }}
               </span>
             </div>
-            <!-- Botón eliminar pestaña -->
-            <button
-              @click.stop="deleteCustomTab(tab.id)"
-              class="absolute -top-1 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
-              title="Eliminar pestaña"
-            >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <!-- Botones editar/eliminar pestaña -->
+            <div class="absolute -top-1 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+              <button
+                @click.stop="openEditTabModal(tab)"
+                class="bg-blue-500 text-white rounded-full p-0.5 hover:bg-blue-600"
+                title="Editar pestaña"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button
+                @click.stop="deleteCustomTab(tab.id)"
+                class="bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+                title="Eliminar pestaña"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </button>
 
           <!-- Botón agregar pestaña -->
@@ -518,7 +529,7 @@
         <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-2xl font-bold text-gray-900">Nueva Pestaña</h3>
+            <h3 class="text-2xl font-bold text-gray-900">{{ editingTabId ? 'Editar Pestaña' : 'Nueva Pestaña' }}</h3>
             <button @click="closeTabModal" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -594,7 +605,7 @@
                 type="submit"
                 class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
-                Crear Pestaña
+                {{ editingTabId ? 'Guardar Cambios' : 'Crear Pestaña' }}
               </button>
             </div>
           </form>
@@ -723,6 +734,7 @@ const currentTab = ref('all')
 const loading = ref(false)
 const isModalOpen = ref(false)
 const isTabModalOpen = ref(false)
+const editingTabId = ref(null)
 const selectedTaskForEdit = ref(null)
 const activeMenuTaskId = ref(null)
 
@@ -767,11 +779,11 @@ const isTabMembersModalOpen = ref(false)
 const selectedTabForMembers = ref(null)
 
 const tasksCount = computed(() => taskStore.tasksCount)
-const activeTasksCount = computed(() => taskStore.tasks.filter(t => t.status !== 'Completada').length)
+const activeTasksCount = computed(() => taskStore.tasks.filter(t => t.status !== 'Completada' && t.status !== 'Por Verificar').length)
 
 const filteredTasks = computed(() => {
-  // Excluir tareas completadas (se ven en la vista dedicada /verificar)
-  let tasks = taskStore.tasks.filter(t => t.status !== 'Completada')
+  // Excluir tareas completadas y por verificar (se ven en la vista dedicada /verificar)
+  let tasks = taskStore.tasks.filter(t => t.status !== 'Completada' && t.status !== 'Por Verificar')
 
   // Filtrar por pestaña personalizada
   if (currentTab.value !== 'all') {
@@ -1041,25 +1053,45 @@ const getAvatarColor = (name) => {
 
 const formatDueDate = (date) => {
   if (!date) return 'Sin fecha'
-  const d = new Date(date)
+
+  // Parsear la fecha manualmente para evitar problemas de zona horaria
+  const dateParts = date.split('-')
+  if (dateParts.length !== 3) {
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return 'Sin fecha'
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  }
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1
+  const day = parseInt(dateParts[2])
+
+  const taskDate = new Date(year, month, day)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
-  const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
 
   if (taskDate.getTime() === today.getTime()) return 'Hoy'
   if (taskDate.getTime() === tomorrow.getTime()) return 'Mañana'
 
-  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  return taskDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 }
 
 const getDueDateColor = (task) => {
   if (!task.due_date) return 'text-gray-400'
   if (task.status === 'Completada') return 'text-gray-400'
 
+  // Parsear fecha manualmente para evitar problemas de zona horaria
+  const dateParts = task.due_date.split('-')
+  if (dateParts.length !== 3) return 'text-gray-600'
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1
+  const day = parseInt(dateParts[2])
+
+  const dueDate = new Date(year, month, day)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const dueDate = new Date(task.due_date)
 
   if (dueDate < today) return 'text-red-600'
   if (dueDate.getTime() === today.getTime()) return 'text-orange-600'
@@ -1282,6 +1314,7 @@ const loadCustomTabs = async () => {
 }
 
 const openTabModal = () => {
+  editingTabId.value = null
   newTabData.value = {
     label: '',
     status: 'all',
@@ -1290,8 +1323,19 @@ const openTabModal = () => {
   isTabModalOpen.value = true
 }
 
+const openEditTabModal = (tab) => {
+  editingTabId.value = tab.id
+  newTabData.value = {
+    label: tab.label,
+    status: tab.filters.status || 'all',
+    assigneeIds: tab.filters.assigneeIds ? [...tab.filters.assigneeIds] : []
+  }
+  isTabModalOpen.value = true
+}
+
 const closeTabModal = () => {
   isTabModalOpen.value = false
+  editingTabId.value = null
 }
 
 const handleCreateTab = async () => {
@@ -1300,7 +1344,11 @@ const handleCreateTab = async () => {
     return
   }
 
-  await createCustomTab(newTabData.value)
+  if (editingTabId.value) {
+    await updateCustomTab(editingTabId.value, newTabData.value)
+  } else {
+    await createCustomTab(newTabData.value)
+  }
 }
 
 const createCustomTab = async (tabData) => {
@@ -1326,6 +1374,33 @@ const createCustomTab = async (tabData) => {
   } catch (error) {
     console.error('Error al crear pestaña:', error)
     toast.error('Error al crear la pestaña')
+  }
+}
+
+const updateCustomTab = async (tabId, tabData) => {
+  try {
+    const updatedTab = await tabService.updateTab(tabId, {
+      label: tabData.label,
+      filters: {
+        status: tabData.status || 'all',
+        assigneeIds: tabData.assigneeIds || []
+      }
+    })
+
+    const index = customTabs.value.findIndex(t => t.id === tabId)
+    if (index !== -1) {
+      customTabs.value[index] = {
+        id: updatedTab.id,
+        label: updatedTab.label,
+        filters: updatedTab.filters || {}
+      }
+    }
+
+    closeTabModal()
+    toast.success('Pestaña actualizada correctamente')
+  } catch (error) {
+    console.error('Error al actualizar pestaña:', error)
+    toast.error('Error al actualizar la pestaña')
   }
 }
 

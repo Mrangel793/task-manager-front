@@ -146,13 +146,27 @@ const adminItems = computed(() => {
   ]
 })
 
+// Elementos para Operario
+const operarioItems = computed(() => {
+  const doneCount = taskStore.tasks.filter(t => t.status === 'Completada' || t.status === 'Por Verificar').length
+  return [
+    {
+      name: 'completadas',
+      label: 'Completadas',
+      to: '/verificar',
+      icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+      badge: doneCount > 0 ? { count: doneCount, color: 'bg-green-100 text-green-600' } : null
+    }
+  ]
+})
+
 const navigationSections = computed(() => {
   const sections = []
 
   // Sección principal (todos los usuarios)
   sections.push({
     name: 'main',
-    items: baseItems.value  // Ahora es .value porque baseItems es computed
+    items: baseItems.value
   })
 
   // Sección de administración (solo Admin)
@@ -161,6 +175,15 @@ const navigationSections = computed(() => {
       name: 'admin',
       title: 'Administración',
       items: adminItems.value
+    })
+  }
+
+  // Sección para Operario
+  if (userRole.value === 'operario') {
+    sections.push({
+      name: 'operario',
+      title: 'Mis Tareas',
+      items: operarioItems.value
     })
   }
 

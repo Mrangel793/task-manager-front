@@ -98,14 +98,14 @@ const routes = [
           subtitle: 'Alertas y actualizaciones'
         }
       },
-      // Verificación de tareas (Admin)
+      // Verificación de tareas (Admin y Operario)
       {
         path: 'verificar',
         name: 'verificar',
         component: () => import('@/views/tasks/PorVerificarView.vue'),
         meta: {
           requiresAuth: true,
-          requiresRole: ['admin'],
+          requiresRole: ['admin', 'operario'],
           title: 'Tareas Completadas',
           subtitle: 'Tareas verificadas y finalizadas'
         }

@@ -53,6 +53,11 @@ const userRole = computed(() => authStore.userRole)
 const { unreadCount } = storeToRefs(notificationStore)
 const { completedTasks } = storeToRefs(taskStore)
 
+// Para operario: cuenta tanto 'Completada' como 'Por Verificar' (tareas entregadas pendientes de verificación)
+const operarioDoneCount = computed(() =>
+  taskStore.tasks.filter(t => t.status === 'Completada' || t.status === 'Por Verificar').length
+)
+
 // Navegación para Operario
 const operarioNav = computed(() => [
   {
@@ -60,6 +65,13 @@ const operarioNav = computed(() => [
     label: 'Tareas',
     to: '/',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
+  },
+  {
+    name: 'completadas',
+    label: 'Completadas',
+    to: '/verificar',
+    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    badge: { count: operarioDoneCount.value }
   },
   {
     name: 'notifications',
