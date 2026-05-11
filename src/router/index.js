@@ -87,6 +87,16 @@ const routes = [
           subtitle: 'Configuración y pruebas de notificaciones'
         }
       },
+      {
+        path: 'profile/google-calendar',
+        name: 'profile-google-calendar',
+        component: () => import('@/views/profile/GoogleCalendarSettingsView.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Google Calendar',
+          subtitle: 'Sincroniza tus tareas con Google Calendar'
+        }
+      },
       // Notifications
       {
         path: 'notifications',

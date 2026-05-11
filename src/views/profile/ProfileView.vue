@@ -119,6 +119,17 @@
             Tamaño de Texto
           </BaseButton>
 
+          <BaseButton
+            @click="router.push('/profile/google-calendar')"
+            variant="secondary"
+            class="flex-1 sm:flex-none"
+          >
+            <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.5 3h-15A1.5 1.5 0 003 4.5v15A1.5 1.5 0 004.5 21h15a1.5 1.5 0 001.5-1.5v-15A1.5 1.5 0 0019.5 3zM8 17H6v-7h2v7zm-1-8a1 1 0 110-2 1 1 0 010 2zm10 8h-2v-3.5c0-.83-.67-1.5-1.5-1.5S12 12.67 12 13.5V17h-2v-7h2v1.07A3.5 3.5 0 0117 14.5V17z"/>
+            </svg>
+            Google Calendar
+          </BaseButton>
+
         </div>
       </div>
     </div>
