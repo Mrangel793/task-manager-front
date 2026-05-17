@@ -97,6 +97,17 @@ const routes = [
           subtitle: 'Sincroniza tus tareas con Google Calendar'
         }
       },
+      // Contacts
+      {
+        path: 'contacts',
+        name: 'contacts',
+        component: () => import('@/views/contacts/ContactsView.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Contactos',
+          subtitle: 'Directorio de contactos'
+        }
+      },
       // Notifications
       {
         path: 'notifications',

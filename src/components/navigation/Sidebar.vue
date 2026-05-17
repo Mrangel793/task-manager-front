@@ -79,6 +79,9 @@ const appName = import.meta.env.VITE_APP_NAME || 'Task Manager'
 const appVersion = import.meta.env.VITE_APP_VERSION || '1.0.0'
 
 const userRole = computed(() => authStore.userRole)
+const canViewContacts = computed(() => {
+  return userRole.value === 'admin' || authStore.currentUser?.permissions?.includes('view-contacts')
+})
 
 // Cargar notificaciones al montar (para actualizar el conteo)
 onMounted(async () => {
@@ -175,6 +178,20 @@ const navigationSections = computed(() => {
       name: 'admin',
       title: 'Administración',
       items: adminItems.value
+    })
+  }
+
+  // Contactos (Admin + usuarios con permiso)
+  if (canViewContacts.value) {
+    sections.push({
+      name: 'contacts',
+      title: 'Directorio',
+      items: [{
+        name: 'contacts',
+        label: 'Contactos',
+        to: '/contacts',
+        icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'
+      }]
     })
   }
 
