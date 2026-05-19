@@ -22,7 +22,7 @@
         <!-- Gestionar acceso (solo Admin) -->
         <button
           v-if="isAdmin"
-          @click="showAccessModal = true"
+          @click="openAccessModal"
           class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,24 +333,41 @@
         </button>
       </div>
       <div class="p-6 space-y-4">
-        <p class="text-sm text-gray-600">Ingresa el ID del usuario al que deseas otorgar o revocar acceso a los contactos.</p>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">ID de usuario</label>
-          <input
-            v-model="accessUserId"
-            type="text"
-            placeholder="UUID del usuario"
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
+        <p class="text-sm text-gray-600">Selecciona el usuario al que deseas otorgar o revocar acceso a los contactos.</p>
+
+        <!-- Loading usuarios -->
+        <div v-if="loadingUsers" class="flex items-center gap-2 text-sm text-gray-500">
+          <div class="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          Cargando usuarios...
         </div>
+
+        <!-- Select de usuarios -->
+        <div v-else>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+          <select
+            v-model="accessUserId"
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+          >
+            <option value="">Selecciona un usuario...</option>
+            <option
+              v-for="u in orgUsers"
+              :key="u.id"
+              :value="u.id"
+            >
+              {{ u.name }} — {{ u.role || u.roles?.[0]?.name || '' }}
+              {{ u.permissions?.includes('view-contacts') ? '✓ tiene acceso' : '' }}
+            </option>
+          </select>
+        </div>
+
         <p v-if="accessMessage" class="text-sm" :class="accessError ? 'text-red-600' : 'text-green-600'">
           {{ accessMessage }}
         </p>
         <div class="flex gap-3">
-          <button @click="handleRevokeAccess" :disabled="accessLoading" class="flex-1 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors">
+          <button @click="handleRevokeAccess" :disabled="accessLoading || !accessUserId" class="flex-1 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors">
             Revocar acceso
           </button>
-          <button @click="handleGrantAccess" :disabled="accessLoading" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
+          <button @click="handleGrantAccess" :disabled="accessLoading || !accessUserId" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
             Otorgar acceso
           </button>
         </div>
@@ -362,7 +379,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore, useContactStore } from '@/stores'
-import { contactService } from '@/services'
+import { contactService, userService } from '@/services'
 
 const authStore = useAuthStore()
 const contactStore = useContactStore()
@@ -498,16 +515,38 @@ const accessUserId = ref('')
 const accessLoading = ref(false)
 const accessMessage = ref('')
 const accessError = ref(false)
+const orgUsers = ref([])
+const loadingUsers = ref(false)
+
+async function openAccessModal() {
+  showAccessModal.value = true
+  accessUserId.value = ''
+  accessMessage.value = ''
+  accessError.value = false
+  loadingUsers.value = true
+  try {
+    const data = await userService.getUsers()
+    // Excluir al Admin actual (no tiene sentido gestionar su propio acceso)
+    const currentId = authStore.currentUser?.id
+    orgUsers.value = (Array.isArray(data) ? data : data.users || [])
+      .filter(u => u.id !== currentId)
+  } catch {
+    orgUsers.value = []
+  } finally {
+    loadingUsers.value = false
+  }
+}
 
 async function handleGrantAccess() {
-  if (!accessUserId.value.trim()) return
+  if (!accessUserId.value) return
   accessLoading.value = true
   accessMessage.value = ''
   try {
-    const res = await contactService.grantAccess(accessUserId.value.trim())
+    const res = await contactService.grantAccess(accessUserId.value)
     accessMessage.value = res.message || 'Acceso otorgado.'
     accessError.value = false
-    accessUserId.value = ''
+    // Refrescar lista para actualizar indicadores de acceso
+    await openAccessModal()
   } catch (err) {
     accessMessage.value = err.response?.data?.message || 'Error al otorgar acceso.'
     accessError.value = true
@@ -517,14 +556,14 @@ async function handleGrantAccess() {
 }
 
 async function handleRevokeAccess() {
-  if (!accessUserId.value.trim()) return
+  if (!accessUserId.value) return
   accessLoading.value = true
   accessMessage.value = ''
   try {
-    const res = await contactService.revokeAccess(accessUserId.value.trim())
+    const res = await contactService.revokeAccess(accessUserId.value)
     accessMessage.value = res.message || 'Acceso revocado.'
     accessError.value = false
-    accessUserId.value = ''
+    await openAccessModal()
   } catch (err) {
     accessMessage.value = err.response?.data?.message || 'Error al revocar acceso.'
     accessError.value = true
