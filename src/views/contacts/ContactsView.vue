@@ -67,7 +67,7 @@
         @change="loadContacts"
         class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
       >
-        <option value="">Todas las empresas</option>
+        <option value="">Todos los municipios</option>
         <option v-for="source in contactStore.sources" :key="source" :value="source">
           {{ source }}
         </option>
@@ -98,7 +98,7 @@
             <th class="px-4 py-3 text-left font-semibold text-gray-600">Nombre</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-600">Teléfono</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-600">Email</th>
-            <th class="px-4 py-3 text-left font-semibold text-gray-600">Empresa</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-600">Municipio</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-600">Notas</th>
             <th v-if="canManage" class="px-4 py-3 text-right font-semibold text-gray-600">Acciones</th>
           </tr>
@@ -242,27 +242,17 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Empresa / Origen</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Municipio / Origen</label>
           <input
             v-model="form.source"
             type="text"
-            placeholder="Ej: Sangil, Pidecuesta..."
+            placeholder="Ej: Bucaramanga, Piedecuesta..."
             list="sources-list"
             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
           <datalist id="sources-list">
             <option v-for="source in contactStore.sources" :key="source" :value="source" />
           </datalist>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-          <input
-            v-model="form.address"
-            type="text"
-            placeholder="Dirección"
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
         </div>
 
         <div>
@@ -430,13 +420,12 @@ const form = ref({
   phone: '',
   email: '',
   source: '',
-  address: '',
   notes: ''
 })
 
 function openCreateModal() {
   editingContact.value = null
-  form.value = { name: '', phone: '', email: '', source: '', address: '', notes: '' }
+  form.value = { name: '', phone: '', email: '', source: '', notes: '' }
   formError.value = ''
   showContactModal.value = true
 }
@@ -448,7 +437,6 @@ function openEditModal(contact) {
     phone: contact.phone || '',
     email: contact.email || '',
     source: contact.source || '',
-    address: contact.address || '',
     notes: contact.notes || ''
   }
   formError.value = ''
@@ -469,7 +457,6 @@ async function saveContact() {
       phone: form.value.phone || null,
       email: form.value.email || null,
       source: form.value.source || null,
-      address: form.value.address || null,
       notes: form.value.notes || null
     }
     if (editingContact.value) {
