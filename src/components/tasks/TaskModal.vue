@@ -88,6 +88,21 @@
             <p v-else-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
           </div>
 
+          <!-- Proyecto -->
+          <div v-if="availableProjects.length > 0">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Proyecto</label>
+            <select
+              v-model="formData.project_id"
+              class="input-field w-full"
+              :disabled="isSubmitting || !!props.defaultProjectId"
+            >
+              <option :value="null">Sin proyecto</option>
+              <option v-for="p in availableProjects" :key="p.id" :value="p.id">
+                {{ p.name }}
+              </option>
+            </select>
+          </div>
+
           <!-- Fecha -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -163,8 +178,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch, nextTick } from 'vue'
+import { reactive, ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useAuthStore } from '@/stores'
+import { useProjectStore } from '@/stores/project.store'
 import { taskSchema, taskSchemaAdmin } from '@/utils/validationSchemas'
 import BaseButton from '@/components/common/BaseButton.vue'
 import VoiceInputButton from '@/components/common/VoiceInputButton.vue'
@@ -185,18 +201,33 @@ const props = defineProps({
   onSave: {
     type: Function,
     default: null
+  },
+  defaultProjectId: {
+    type: String,
+    default: null
+  },
+  projects: {
+    type: Array,
+    default: () => []
   }
 })
 
 const emit = defineEmits(['save', 'cancel'])
 
 const authStore = useAuthStore()
+const projectStore = useProjectStore()
+
+const availableProjects = computed(() => {
+  if (props.projects.length > 0) return props.projects
+  return projectStore.activeProjects
+})
 
 const formData = reactive({
   title: '',
   description: '',
   due_date: '',
-  assignee_id: null
+  assignee_id: null,
+  project_id: null
 })
 
 const errors = reactive({
@@ -333,6 +364,7 @@ const resetForm = () => {
   formData.description = ''
   formData.due_date = ''
   formData.assignee_id = null
+  formData.project_id = props.defaultProjectId || null
   clearErrors()
 }
 
@@ -348,6 +380,7 @@ watch(() => props.task, (newTask) => {
     formData.description = newTask.description || ''
     formData.due_date = newTask.due_date || ''
     formData.assignee_id = newTask.assignee?.id || newTask.assignee_id || newTask.assigned_to || null
+    formData.project_id = newTask.project_id || newTask.project?.id || props.defaultProjectId || null
     nextTick(autoResizeTitle)
   } else {
     resetForm()
@@ -364,6 +397,10 @@ watch(() => props.isOpen, (isOpen) => {
     // Si es operario y está creando una nueva tarea, auto-asignarse
     if (!props.task && authStore.userRole === 'operario') {
       ensureAssignee()
+    }
+    // Cargar proyectos si no están cargados
+    if (projectStore.projects.length === 0) {
+      projectStore.fetchProjects().catch(() => {})
     }
     nextTick(autoResizeTitle)
   }

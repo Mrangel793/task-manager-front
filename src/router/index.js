@@ -37,6 +37,26 @@ const routes = [
           title: 'Dashboard'
         }
       },
+      // Projects routes
+      {
+        path: 'projects',
+        name: 'projects',
+        component: () => import('@/views/projects/ProjectsView.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Proyectos',
+          subtitle: 'Organiza tus tareas por proyecto'
+        }
+      },
+      {
+        path: 'projects/:id',
+        name: 'project-detail',
+        component: () => import('@/views/projects/ProjectDetailView.vue'),
+        meta: {
+          requiresAuth: true,
+          title: 'Detalle de Proyecto'
+        }
+      },
       // Tasks routes
       {
         path: 'tasks',
