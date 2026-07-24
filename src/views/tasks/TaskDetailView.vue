@@ -142,6 +142,9 @@
 
         </div>
 
+        <!-- Comentarios (modo conversacional) -->
+        <TaskComments :task-id="task.id" />
+
         <!-- Historial de cambios -->
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
           <!-- Header -->
@@ -292,6 +295,7 @@ import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/common/BaseButton.vue'
 import TaskModal from '@/components/tasks/TaskModal.vue'
 import ReassignTaskModal from '@/components/tasks/ReassignTaskModal.vue'
+import TaskComments from '@/components/tasks/TaskComments.vue'
 
 const route = useRoute()
 const router = useRouter()

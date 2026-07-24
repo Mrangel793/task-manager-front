@@ -69,3 +69,7 @@ pnpm-lock.yaml
 nul
 
 claude.md
+
+# Claude Code
+.claude/skills/
+skills-lock.json

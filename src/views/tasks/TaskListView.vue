@@ -385,17 +385,31 @@
             </div>
           </div>
 
-          <!-- Add task row -->
-          <div
-            v-if="canCreateTask"
-            class="px-4 py-3 border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
-            @click="openCreateModal"
-          >
-            <div class="flex items-center text-gray-400 text-sm">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Add task row - inline quick create -->
+          <div v-if="canCreateTask" class="border-t border-gray-100">
+            <div v-if="!quickCreateActive" class="px-4 py-3 hover:bg-gray-50 cursor-pointer" @click="activateQuickCreate">
+              <div class="flex items-center text-gray-400 text-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Agregar tarea...
+              </div>
+            </div>
+            <div v-else class="px-4 py-2 flex items-center gap-2 bg-blue-50">
+              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Agregar tarea...
+              <input
+                ref="quickCreateInput"
+                v-model="quickCreateTitle"
+                type="text"
+                placeholder="Nombre de la tarea... (Enter para guardar, Esc para cancelar)"
+                class="flex-1 text-sm bg-transparent border-none outline-none text-gray-800 placeholder-gray-400"
+                @keydown.enter="submitQuickCreate"
+                @keydown.esc="cancelQuickCreate"
+                @blur="handleQuickCreateBlur"
+              />
+              <span v-if="quickCreateSaving" class="text-xs text-blue-500">Guardando...</span>
             </div>
           </div>
 
@@ -687,7 +701,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore, useAuthStore } from '@/stores'
 import { userService, tabService } from '@/services'
@@ -1114,7 +1128,7 @@ const loadTasks = async () => {
     loading.value = true
   }
   try {
-    await taskStore.fetchTasks()
+    await taskStore.fetchTasks(undefined, { force: true })
   } catch (error) {
     toast.error('Error al cargar las tareas')
   } finally {
@@ -1266,6 +1280,57 @@ const handleCancelComplete = () => {
   completeConfirmDialog.value = {
     visible: false,
     task: null
+  }
+}
+
+// Quick create inline
+const quickCreateActive = ref(false)
+const quickCreateTitle = ref('')
+const quickCreateSaving = ref(false)
+const quickCreateInput = ref(null)
+
+const activateQuickCreate = async () => {
+  quickCreateActive.value = true
+  quickCreateTitle.value = ''
+  await nextTick()
+  quickCreateInput.value?.focus()
+}
+
+const cancelQuickCreate = () => {
+  quickCreateActive.value = false
+  quickCreateTitle.value = ''
+}
+
+const handleQuickCreateBlur = () => {
+  // Pequeño delay para permitir que Enter procese primero
+  setTimeout(() => {
+    if (!quickCreateSaving.value) {
+      cancelQuickCreate()
+    }
+  }, 150)
+}
+
+const submitQuickCreate = async () => {
+  const title = quickCreateTitle.value.trim()
+  if (!title) {
+    cancelQuickCreate()
+    return
+  }
+  quickCreateSaving.value = true
+  try {
+    const taskData = {
+      title,
+    }
+    await taskStore.createTask(taskData)
+    toast.success('Tarea creada')
+    quickCreateTitle.value = ''
+    // Mantener el input activo para crear otra rápidamente
+    await nextTick()
+    quickCreateInput.value?.focus()
+  } catch {
+    toast.error('Error al crear la tarea')
+  } finally {
+    quickCreateSaving.value = false
   }
 }
 

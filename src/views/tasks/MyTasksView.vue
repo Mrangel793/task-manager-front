@@ -183,7 +183,11 @@ const myTasks = computed(() => {
   const userId = authStore.user?.id
   if (!userId) return []
 
-  return taskStore.tasks.filter(task => task.assignee_id === userId || task.assigned_to === userId)
+  return taskStore.tasks.filter(task =>
+    task.assignee_id === userId ||
+    task.assigned_to === userId ||
+    task.assignee?.id === userId
+  )
 })
 
 const myTasksCount = computed(() => {

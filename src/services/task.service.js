@@ -12,10 +12,8 @@ const prepareDateTimeData = (taskData) => {
   if (data.due_date && data.due_time) {
     // Crear datetime local: "2026-01-23T19:50:00" (sin Z al final)
     data.due_time = `${data.due_date}T${data.due_time}:00`
-  } else if (data.due_date && !data.due_time) {
-    // Si solo hay fecha, usar mediodía para evitar problemas de zona horaria
-    data.due_time = `${data.due_date}T12:00:00`
   }
+  // Si solo hay fecha sin hora, no agregar due_time — el backend no valida hora si no se envía
 
   return data
 }
@@ -49,7 +47,7 @@ export const taskService = {
    * Obtener todas las tareas con filtros
    */
   async getTasks(filters = {}) {
-    const response = await api.get('v1/tasks/', { params: filters })
+    const response = await api.get('v1/tasks/', { params: { per_page: 200, ...filters } })
     // El backend envuelve la respuesta en { success, message, data }
     const data = response.data.data || response.data
     // Procesar fechas de cada tarea
