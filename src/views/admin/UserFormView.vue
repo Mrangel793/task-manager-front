@@ -42,10 +42,9 @@
           required
         />
 
-        <BaseInput
+        <PhoneInput
           v-model="formData.phone"
           label="Teléfono"
-          placeholder="+57 3XX XXX XXXX"
           :error="errors.phone"
           :disabled="isSubmitting"
         />
@@ -144,6 +143,7 @@ import { userService } from '@/services'
 import { useToast } from '@/composables/useToast'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import PhoneInput from '@/components/auth/PhoneInput.vue'
 
 const router = useRouter()
 const route = useRoute()
