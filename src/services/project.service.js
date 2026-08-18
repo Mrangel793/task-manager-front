@@ -39,5 +39,20 @@ export const projectService = {
     const response = await api.get('v1/projects/summary/')
     const data = response.data.data || response.data
     return data
+  },
+
+  async getMembers(projectId) {
+    const response = await api.get(`v1/projects/${projectId}/members`)
+    return response.data.data || []
+  },
+
+  async addMember(projectId, userId) {
+    const response = await api.post(`v1/projects/${projectId}/members`, { user_id: userId })
+    return response.data
+  },
+
+  async removeMember(projectId, userId) {
+    const response = await api.delete(`v1/projects/${projectId}/members/${userId}`)
+    return response.data
   }
 }

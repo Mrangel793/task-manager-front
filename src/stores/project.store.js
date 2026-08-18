@@ -5,6 +5,7 @@ export const useProjectStore = defineStore('project', {
   state: () => ({
     projects: [],
     currentProject: null,
+    currentProjectMembers: [],
     summary: null,
     loading: false,
     error: null
@@ -95,6 +96,26 @@ export const useProjectStore = defineStore('project', {
       } catch (error) {
         console.error('Error al cargar resumen:', error)
       }
+    },
+
+    async fetchMembers(projectId) {
+      try {
+        this.currentProjectMembers = await projectService.getMembers(projectId)
+        return this.currentProjectMembers
+      } catch (error) {
+        console.error('Error al cargar miembros:', error)
+        this.currentProjectMembers = []
+      }
+    },
+
+    async addMember(projectId, userId) {
+      await projectService.addMember(projectId, userId)
+      await this.fetchMembers(projectId)
+    },
+
+    async removeMember(projectId, userId) {
+      await projectService.removeMember(projectId, userId)
+      this.currentProjectMembers = this.currentProjectMembers.filter(m => m.id !== userId)
     }
   }
 })
