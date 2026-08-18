@@ -12,7 +12,7 @@
         <BaseButton
           v-if="canCreateTask"
           variant="primary"
-          @click="openCreateModal"
+          @click="activateQuickCreate"
         >
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -244,17 +244,62 @@
           </div>
         </div>
 
-        <!-- Add task row -->
-        <div
-          v-if="canCreateTask"
-          class="px-4 py-3 border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
-          @click="openCreateModal"
-        >
-          <div class="flex items-center text-gray-400 text-sm">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Agregar tarea...
+        <!-- Add task row - inline quick create (Google Tasks style) -->
+        <div v-if="canCreateTask" class="border-t border-gray-100">
+          <div v-if="!quickCreateActive" class="px-4 py-3 hover:bg-gray-50 cursor-pointer" @click="activateQuickCreate">
+            <div class="flex items-center text-gray-400 text-sm">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar tarea...
+            </div>
+          </div>
+          <div v-else class="px-4 pt-4 pb-3 bg-white border-t-2 border-t-primary-500" @click.stop>
+            <div v-if="quickCreateError" class="mb-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+              {{ quickCreateError }}
+            </div>
+            <textarea
+              ref="quickCreateInput"
+              v-model="quickCreateTitle"
+              placeholder="Nueva tarea"
+              rows="1"
+              class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+              @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+              @keydown.enter.prevent="submitQuickCreate"
+              @keydown.esc="cancelQuickCreate"
+            />
+            <textarea
+              v-model="quickCreateDescription"
+              placeholder="Agregar detalles"
+              rows="1"
+              class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+              @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+              @keydown.esc="cancelQuickCreate"
+            />
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <button type="button" @click="$refs.allQuickDate?.showPicker()" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': quickCreateDueDate }" title="Fecha límite">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </button>
+                  <input ref="allQuickDate" v-model="quickCreateDueDate" type="date" :min="todayDate" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </div>
+                <div class="relative">
+                  <button type="button" @click="quickCreateShowAssignee = !quickCreateShowAssignee" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': quickCreateAssigneeId }" title="Asignar a">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  </button>
+                  <select v-if="quickCreateShowAssignee" v-model="quickCreateAssigneeId" class="absolute top-full left-0 mt-1 z-10 text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white shadow-lg min-w-[180px]" @change="quickCreateShowAssignee = false">
+                    <option value="">Sin asignar</option>
+                    <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+                  </select>
+                </div>
+                <span v-if="quickCreateDueDate" class="text-xs text-primary-600 font-medium">{{ formatDueDate(quickCreateDueDate) }}</span>
+              </div>
+              <button type="button" @click="submitQuickCreate" :disabled="!quickCreateTitle.trim() || quickCreateSaving" class="text-sm font-semibold transition-colors" :class="quickCreateTitle.trim() && !quickCreateSaving ? 'text-primary-600 hover:text-primary-800' : 'text-gray-400 cursor-not-allowed'">
+                {{ quickCreateSaving ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -272,7 +317,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore, useAuthStore } from '@/stores'
 import { userService } from '@/services'
@@ -528,6 +573,74 @@ const clearFilters = () => {
 const openCreateModal = () => {
   selectedTaskForEdit.value = null
   isModalOpen.value = true
+}
+
+// Quick create inline
+const quickCreateActive = ref(false)
+const quickCreateTitle = ref('')
+const quickCreateDescription = ref('')
+const quickCreateDueDate = ref('')
+const quickCreateAssigneeId = ref('')
+const quickCreateShowAssignee = ref(false)
+const quickCreateSaving = ref(false)
+const quickCreateError = ref('')
+const quickCreateInput = ref(null)
+
+const todayDate = computed(() => {
+  const d = new Date()
+  return d.toISOString().split('T')[0]
+})
+
+const activateQuickCreate = async () => {
+  quickCreateActive.value = true
+  quickCreateTitle.value = ''
+  quickCreateDescription.value = ''
+  quickCreateDueDate.value = ''
+  quickCreateAssigneeId.value = ''
+  quickCreateShowAssignee.value = false
+  await nextTick()
+  quickCreateInput.value?.focus()
+}
+
+const cancelQuickCreate = () => {
+  quickCreateActive.value = false
+  quickCreateTitle.value = ''
+  quickCreateDescription.value = ''
+  quickCreateDueDate.value = ''
+  quickCreateAssigneeId.value = ''
+  quickCreateShowAssignee.value = false
+  quickCreateError.value = ''
+}
+
+const submitQuickCreate = async () => {
+  const title = quickCreateTitle.value.trim()
+  if (!title) {
+    cancelQuickCreate()
+    return
+  }
+  quickCreateSaving.value = true
+  quickCreateError.value = ''
+  try {
+    const taskData = { title }
+    if (quickCreateDescription.value.trim()) {
+      taskData.description = quickCreateDescription.value.trim()
+    }
+    if (quickCreateDueDate.value) {
+      taskData.due_date = quickCreateDueDate.value
+    }
+    if (quickCreateAssigneeId.value) {
+      taskData.assignee_id = quickCreateAssigneeId.value
+    }
+    await taskStore.createTask(taskData)
+    toast.success('Tarea creada')
+    cancelQuickCreate()
+    await nextTick()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (err) {
+    quickCreateError.value = err?.response?.data?.message || err?.message || 'Error al crear la tarea. Intenta de nuevo.'
+  } finally {
+    quickCreateSaving.value = false
+  }
 }
 
 const closeModal = () => {

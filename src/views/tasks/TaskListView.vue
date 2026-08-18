@@ -269,6 +269,7 @@
                       </select>
                     </div>
                     <button
+                      v-if="canDeleteTask"
                       @click="handleDeleteTask(task); activeMenuTaskId = null"
                       class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 border-t border-gray-100"
                     >
@@ -371,6 +372,7 @@
                     </svg>
                   </button>
                   <button
+                    v-if="canDeleteTask"
                     @click="handleDeleteTask(task)"
                     class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Eliminar tarea"
@@ -385,7 +387,7 @@
             </div>
           </div>
 
-          <!-- Add task row - inline quick create -->
+          <!-- Add task row - inline quick create (Google Tasks style) -->
           <div v-if="canCreateTask" class="border-t border-gray-100">
             <div v-if="!quickCreateActive" class="px-4 py-3 hover:bg-gray-50 cursor-pointer" @click="activateQuickCreate">
               <div class="flex items-center text-gray-400 text-sm">
@@ -395,21 +397,96 @@
                 Agregar tarea...
               </div>
             </div>
-            <div v-else class="px-4 py-2 flex items-center gap-2 bg-blue-50">
-              <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              <input
+            <div v-else class="px-4 pt-4 pb-3 bg-white border-t-2 border-t-primary-500" @click.stop>
+              <!-- Error -->
+              <div v-if="quickCreateError" class="mb-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                {{ quickCreateError }}
+              </div>
+              <!-- Título -->
+              <textarea
                 ref="quickCreateInput"
                 v-model="quickCreateTitle"
-                type="text"
-                placeholder="Nombre de la tarea... (Enter para guardar, Esc para cancelar)"
-                class="flex-1 text-sm bg-transparent border-none outline-none text-gray-800 placeholder-gray-400"
-                @keydown.enter="submitQuickCreate"
+                placeholder="Nueva tarea"
+                rows="1"
+                class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+                @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                @keydown.enter.prevent="submitQuickCreate"
                 @keydown.esc="cancelQuickCreate"
-                @blur="handleQuickCreateBlur"
               />
-              <span v-if="quickCreateSaving" class="text-xs text-blue-500">Guardando...</span>
+              <!-- Descripción -->
+              <textarea
+                v-model="quickCreateDescription"
+                placeholder="Agregar detalles"
+                rows="1"
+                class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+                @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                @keydown.esc="cancelQuickCreate"
+              />
+              <!-- Barra de acciones -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <!-- Fecha -->
+                  <div class="relative">
+                    <button
+                      type="button"
+                      @click="$refs.quickDateInput?.showPicker()"
+                      class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      :class="{ 'text-primary-600 bg-primary-50': quickCreateDueDate }"
+                      title="Fecha límite"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <input
+                      ref="quickDateInput"
+                      v-model="quickCreateDueDate"
+                      type="date"
+                      :min="todayDate"
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <!-- Asignar (solo Admin/Supervisor) -->
+                  <div v-if="canAssign" class="relative">
+                    <button
+                      type="button"
+                      @click="quickCreateShowAssignee = !quickCreateShowAssignee"
+                      class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      :class="{ 'text-primary-600 bg-primary-50': quickCreateAssigneeId }"
+                      title="Asignar a"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </button>
+                    <select
+                      v-if="quickCreateShowAssignee"
+                      v-model="quickCreateAssigneeId"
+                      class="absolute top-full left-0 mt-1 z-10 text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white shadow-lg min-w-[180px]"
+                      @change="quickCreateShowAssignee = false"
+                    >
+                      <option value="">Sin asignar</option>
+                      <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+                    </select>
+                  </div>
+                  <!-- Info de fecha seleccionada -->
+                  <span v-if="quickCreateDueDate" class="text-xs text-primary-600 font-medium">
+                    {{ formatDueDate(quickCreateDueDate) }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  @click="submitQuickCreate"
+                  :disabled="!quickCreateTitle.trim() || quickCreateSaving"
+                  class="text-sm font-semibold transition-colors"
+                  :class="quickCreateTitle.trim() && !quickCreateSaving
+                    ? 'text-primary-600 hover:text-primary-800'
+                    : 'text-gray-400 cursor-not-allowed'"
+                >
+                  {{ quickCreateSaving ? 'Guardando...' : 'Guardar' }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -469,16 +546,18 @@
         </div>
       </div>
 
-    <!-- FAB (Floating Action Button) - Solo Admin/Supervisor -->
+    <!-- FAB (Floating Action Button) - Solo Admin/Supervisor, oculto durante quick create -->
+    <Transition name="fade">
     <button
-      v-if="canCreateTask"
-      @click="openCreateModal"
-      class="fixed bottom-20 right-6 lg:bottom-6 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-colors z-30"
+      v-if="canCreateTask && !quickCreateActive"
+      @click="activateQuickCreate"
+      class="fixed bottom-20 right-6 lg:bottom-6 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-4 shadow-lg transition-all z-30"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
     </button>
+    </Transition>
 
     <!-- Task Modal -->
     <TaskModal
@@ -969,6 +1048,11 @@ const canAssign = computed(() => {
   return role === 'admin' || role === 'supervisor'
 })
 
+const canDeleteTask = computed(() => {
+  const role = authStore.userRole
+  return role === 'admin' || role === 'supervisor'
+})
+
 const hasActiveFilters = computed(() => {
   return filters.value.search !== '' ||
     filters.value.status !== 'all' ||
@@ -1193,7 +1277,10 @@ const handleDeleteTask = (task) => {
         toast.success('Tarea eliminada correctamente')
         closeConfirmModal()
       } catch (error) {
-        toast.error('Error al eliminar la tarea')
+        const msg = error?.status === 403
+          ? 'No tienes permiso para eliminar tareas'
+          : 'Error al eliminar la tarea'
+        toast.error(msg)
         closeConfirmModal()
       }
     }
@@ -1286,12 +1373,26 @@ const handleCancelComplete = () => {
 // Quick create inline
 const quickCreateActive = ref(false)
 const quickCreateTitle = ref('')
+const quickCreateDescription = ref('')
+const quickCreateDueDate = ref('')
+const quickCreateAssigneeId = ref('')
+const quickCreateShowAssignee = ref(false)
 const quickCreateSaving = ref(false)
+const quickCreateError = ref('')
 const quickCreateInput = ref(null)
+
+const todayDate = computed(() => {
+  const d = new Date()
+  return d.toISOString().split('T')[0]
+})
 
 const activateQuickCreate = async () => {
   quickCreateActive.value = true
   quickCreateTitle.value = ''
+  quickCreateDescription.value = ''
+  quickCreateDueDate.value = ''
+  quickCreateAssigneeId.value = ''
+  quickCreateShowAssignee.value = false
   await nextTick()
   quickCreateInput.value?.focus()
 }
@@ -1299,15 +1400,11 @@ const activateQuickCreate = async () => {
 const cancelQuickCreate = () => {
   quickCreateActive.value = false
   quickCreateTitle.value = ''
-}
-
-const handleQuickCreateBlur = () => {
-  // Pequeño delay para permitir que Enter procese primero
-  setTimeout(() => {
-    if (!quickCreateSaving.value) {
-      cancelQuickCreate()
-    }
-  }, 150)
+  quickCreateDescription.value = ''
+  quickCreateDueDate.value = ''
+  quickCreateAssigneeId.value = ''
+  quickCreateShowAssignee.value = false
+  quickCreateError.value = ''
 }
 
 const submitQuickCreate = async () => {
@@ -1317,18 +1414,25 @@ const submitQuickCreate = async () => {
     return
   }
   quickCreateSaving.value = true
+  quickCreateError.value = ''
   try {
-    const taskData = {
-      title,
+    const taskData = { title }
+    if (quickCreateDescription.value.trim()) {
+      taskData.description = quickCreateDescription.value.trim()
+    }
+    if (quickCreateDueDate.value) {
+      taskData.due_date = quickCreateDueDate.value
+    }
+    if (quickCreateAssigneeId.value) {
+      taskData.assignee_id = quickCreateAssigneeId.value
     }
     await taskStore.createTask(taskData)
     toast.success('Tarea creada')
-    quickCreateTitle.value = ''
-    // Mantener el input activo para crear otra rápidamente
+    cancelQuickCreate()
     await nextTick()
-    quickCreateInput.value?.focus()
-  } catch {
-    toast.error('Error al crear la tarea')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (err) {
+    quickCreateError.value = err?.response?.data?.message || err?.message || 'Error al crear la tarea. Intenta de nuevo.'
   } finally {
     quickCreateSaving.value = false
   }
@@ -1357,6 +1461,9 @@ const handleSaveTask = async (taskData) => {
       taskStore.createTask(taskData).catch(() => {
         toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
       })
+      // Scroll al inicio de la lista
+      await nextTick()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   } catch (error) {
     toast.error(error.message || 'Error al guardar la tarea')

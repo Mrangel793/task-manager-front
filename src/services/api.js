@@ -33,15 +33,11 @@ api.interceptors.response.use(
     const originalRequest = error.config
 
     // Manejar error 401 (no autorizado)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const currentToken = localStorage.getItem('accessToken')
+    if (error.response?.status === 401 && !originalRequest._retry && currentToken) {
       originalRequest._retry = true
 
       try {
-        const currentToken = localStorage.getItem('accessToken')
-
-        if (!currentToken) {
-          throw new Error('No access token available')
-        }
 
         // Intentar refrescar el token (Sanctum usa el token actual para generar uno nuevo)
         const response = await axios.post(

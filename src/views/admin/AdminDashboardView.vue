@@ -173,54 +173,50 @@
 
           <!-- Quick create cuando está vacío -->
           <div v-else-if="filteredAllTasks.length === 0 && isQuickCreateMode" class="bg-white rounded-lg border border-gray-200">
-            <div class="px-3 sm:px-4 py-4">
-              <!-- Input con voz -->
-              <div class="flex items-center gap-2 sm:gap-3">
-                <div class="flex-shrink-0 w-5 h-5">
-                  <svg v-if="isCreatingTask" class="w-5 h-5 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-                </div>
-                <div class="flex-1 relative">
-                  <textarea
-                    ref="quickCreateInput"
-                    v-model="newTaskTitle"
-                    :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-9 sm:pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[36px] sm:min-h-[42px] max-h-[120px] sm:max-h-[150px]"
-                    :disabled="isCreatingTask"
-                    rows="1"
-                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
-                    @keydown.enter.prevent="handleQuickCreateTask"
-                    @keydown.escape.prevent="cancelQuickCreate"
-                    autofocus
-                  ></textarea>
-                  <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
-                    <VoiceInputButton
-                      v-model="newTaskTitle"
-                      :disabled="isCreatingTask"
-                      :show-status="false"
-                      size="small"
-                    />
-                  </div>
-                </div>
+            <div class="px-4 pt-4 pb-3 bg-white border-t-2 border-t-primary-500" @click.stop>
+              <div v-if="quickCreateError" class="mb-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                {{ quickCreateError }}
               </div>
-              <!-- Botones -->
-              <div class="flex items-center justify-end gap-2 mt-2 pl-7">
-                <button
-                  @click="cancelQuickCreate"
-                  :disabled="isCreatingTask"
-                  class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  @click="handleQuickCreateTask"
-                  :disabled="!newTaskTitle.trim() || isCreatingTask"
-                  class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                >
-                  {{ isCreatingTask ? 'Creando...' : 'Crear' }}
+              <textarea
+                ref="quickCreateInput"
+                v-model="newTaskTitle"
+                placeholder="Nueva tarea"
+                rows="1"
+                class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+                @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                @keydown.enter.prevent="handleQuickCreateTask"
+                @keydown.esc="cancelQuickCreate"
+              />
+              <textarea
+                v-model="newTaskDescription"
+                placeholder="Agregar detalles"
+                rows="1"
+                class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+                @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                @keydown.esc="cancelQuickCreate"
+              />
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <button type="button" @click="$refs.adminQuickDateEmpty?.showPicker()" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': newTaskDueDate }" title="Fecha límite">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </button>
+                    <input ref="adminQuickDateEmpty" v-model="newTaskDueDate" type="date" :min="todayDate" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  </div>
+                  <div class="relative">
+                    <button type="button" @click="showAssigneeSelect = !showAssigneeSelect" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': newTaskAssigneeId }" title="Asignar a">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </button>
+                    <select v-if="showAssigneeSelect" v-model="newTaskAssigneeId" class="absolute top-full left-0 mt-1 z-10 text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white shadow-lg min-w-[180px]" @change="showAssigneeSelect = false">
+                      <option value="">Sin asignar</option>
+                      <option v-for="user in allUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
+                    </select>
+                  </div>
+                  <span v-if="newTaskDueDate" class="text-xs text-primary-600 font-medium">{{ formatListDueDate(newTaskDueDate) }}</span>
+                </div>
+                <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-sm font-semibold transition-colors" :class="newTaskTitle.trim() && !isCreatingTask ? 'text-primary-600 hover:text-primary-800' : 'text-gray-400 cursor-not-allowed'">
+                  {{ isCreatingTask ? 'Guardando...' : 'Guardar' }}
                 </button>
               </div>
             </div>
@@ -354,59 +350,62 @@
               </div>
             </div>
 
-            <!-- Fila de creación rápida -->
-            <div
-              v-if="isQuickCreateMode"
-              class="px-3 sm:px-4 py-3 border-t border-gray-200 bg-blue-50"
-            >
-              <!-- Input con voz -->
-              <div class="flex items-center gap-2 sm:gap-3">
-                <div class="flex-shrink-0 w-5 h-5">
-                  <svg v-if="isCreatingTask" class="w-5 h-5 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            <!-- Fila de creación rápida (Google Tasks style) -->
+            <div class="border-t border-gray-100">
+              <div v-if="!isQuickCreateMode" class="px-4 py-3 hover:bg-gray-50 cursor-pointer" @click="activateQuickCreate">
+                <div class="flex items-center text-gray-400 text-sm">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
-                  <div v-else class="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-                </div>
-                <div class="flex-1 relative">
-                  <textarea
-                    ref="quickCreateInput"
-                    v-model="newTaskTitle"
-                    :placeholder="isCreatingTask ? 'Creando tarea...' : 'Título de la tarea...'"
-                    class="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-9 sm:pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none overflow-hidden min-h-[36px] sm:min-h-[42px] max-h-[120px] sm:max-h-[150px]"
-                    :disabled="isCreatingTask"
-                    rows="1"
-                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = (e.target.scrollHeight) + 'px' }"
-                    @keydown.enter.prevent="handleQuickCreateTask"
-                    @keydown.escape.prevent="cancelQuickCreate"
-                    autofocus
-                  ></textarea>
-                  <div class="absolute top-1/2 right-2 transform -translate-y-1/2">
-                    <VoiceInputButton
-                      v-model="newTaskTitle"
-                      :disabled="isCreatingTask"
-                      :show-status="false"
-                      size="small"
-                    />
-                  </div>
+                  Agregar tarea...
                 </div>
               </div>
-              <!-- Botones -->
-              <div class="flex items-center justify-end gap-2 mt-2 pl-7">
-                <button
-                  @click="cancelQuickCreate"
-                  :disabled="isCreatingTask"
-                  class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  @click="handleQuickCreateTask"
-                  :disabled="!newTaskTitle.trim() || isCreatingTask"
-                  class="px-4 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                >
-                  {{ isCreatingTask ? 'Creando...' : 'Crear' }}
-                </button>
+              <div v-else class="px-4 pt-4 pb-3 bg-white border-t-2 border-t-primary-500" @click.stop>
+                <div v-if="quickCreateError" class="mb-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                  {{ quickCreateError }}
+                </div>
+                <textarea
+                  ref="quickCreateInput"
+                  v-model="newTaskTitle"
+                  placeholder="Nueva tarea"
+                  rows="1"
+                  class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+                  @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                  @keydown.enter.prevent="handleQuickCreateTask"
+                  @keydown.esc="cancelQuickCreate"
+                />
+                <textarea
+                  v-model="newTaskDescription"
+                  placeholder="Agregar detalles"
+                  rows="1"
+                  class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+                  @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
+                  @keydown.esc="cancelQuickCreate"
+                />
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="relative">
+                      <button type="button" @click="$refs.adminQuickDate?.showPicker()" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': newTaskDueDate }" title="Fecha límite">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </button>
+                      <input ref="adminQuickDate" v-model="newTaskDueDate" type="date" :min="todayDate" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    </div>
+                    <div class="relative">
+                      <button type="button" @click="showAssigneeSelect = !showAssigneeSelect" class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" :class="{ 'text-primary-600 bg-primary-50': newTaskAssigneeId }" title="Asignar a">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      </button>
+                      <select v-if="showAssigneeSelect" v-model="newTaskAssigneeId" class="absolute top-full left-0 mt-1 z-10 text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white shadow-lg min-w-[180px]" @change="showAssigneeSelect = false">
+                        <option value="">Sin asignar</option>
+                        <option v-for="user in allUsers" :key="user.id" :value="user.id">{{ user.name }}</option>
+                      </select>
+                    </div>
+                    <span v-if="newTaskDueDate" class="text-xs text-primary-600 font-medium">{{ formatListDueDate(newTaskDueDate) }}</span>
+                  </div>
+                  <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-sm font-semibold transition-colors" :class="newTaskTitle.trim() && !isCreatingTask ? 'text-primary-600 hover:text-primary-800' : 'text-gray-400 cursor-not-allowed'">
+                    {{ isCreatingTask ? 'Guardando...' : 'Guardar' }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1199,8 +1198,18 @@ const selectedTaskForEdit = ref(null)
 const isQuickCreateMode = ref(false)
 const isCreatingTask = ref(false)
 const newTaskTitle = ref('')
+const newTaskDescription = ref('')
+const newTaskDueDate = ref('')
+const newTaskAssigneeId = ref('')
+const showAssigneeSelect = ref(false)
+const quickCreateError = ref('')
 const quickCreateInput = ref(null)
 const activeMenuTaskId = ref(null)
+
+const todayDate = computed(() => {
+  const d = new Date()
+  return d.toISOString().split('T')[0]
+})
 
 // Variables para pestañas personalizadas
 const currentTab = ref('all')
@@ -1654,8 +1663,11 @@ const handleDeleteTask = (task) => {
       .then(() => {
         toast.success('Tarea eliminada correctamente')
       })
-      .catch(() => {
-        toast.error('Error al eliminar la tarea')
+      .catch((error) => {
+        const msg = error?.status === 403
+          ? 'No tienes permiso para eliminar tareas'
+          : 'Error al eliminar la tarea'
+        toast.error(msg)
       })
   }
 }
@@ -1733,11 +1745,18 @@ const handleSaveTask = async (taskData) => {
 const activateQuickCreate = () => {
   isQuickCreateMode.value = true
   newTaskTitle.value = ''
-  // Hacer scroll al input y enfocarlo
+  newTaskDescription.value = ''
+  newTaskDueDate.value = ''
+  newTaskAssigneeId.value = ''
+  showAssigneeSelect.value = false
   nextTick(() => {
-    if (quickCreateInput.value) {
-      quickCreateInput.value.focus()
-      quickCreateInput.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const inputs = Array.isArray(quickCreateInput.value)
+      ? quickCreateInput.value
+      : [quickCreateInput.value]
+    const input = inputs.find(el => el)
+    if (input) {
+      input.focus()
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   })
 }
@@ -1745,24 +1764,40 @@ const activateQuickCreate = () => {
 const cancelQuickCreate = () => {
   isQuickCreateMode.value = false
   newTaskTitle.value = ''
+  newTaskDescription.value = ''
+  newTaskDueDate.value = ''
+  newTaskAssigneeId.value = ''
+  showAssigneeSelect.value = false
+  quickCreateError.value = ''
 }
 
-const handleQuickCreateTask = () => {
+const handleQuickCreateTask = async () => {
   const title = newTaskTitle.value.trim()
   if (!title || isCreatingTask.value) return
 
-  // Creación optimista: limpiar input de inmediato, sincronizar en segundo plano
-  newTaskTitle.value = ''
-  toast.success('Tarea creada correctamente')
-  taskStore.createTask({ title }).catch(() => {
-    toast.error('Error al sincronizar. Puedes reintentar desde la tarjeta.')
-  })
-  // Mantener el modo activo para crear más tareas
-  nextTick(() => {
-    if (quickCreateInput.value) {
-      quickCreateInput.value.focus()
+  isCreatingTask.value = true
+  quickCreateError.value = ''
+  try {
+    const taskData = { title }
+    if (newTaskDescription.value.trim()) {
+      taskData.description = newTaskDescription.value.trim()
     }
-  })
+    if (newTaskDueDate.value) {
+      taskData.due_date = newTaskDueDate.value
+    }
+    if (newTaskAssigneeId.value) {
+      taskData.assignee_id = newTaskAssigneeId.value
+    }
+    await taskStore.createTask(taskData)
+    toast.success('Tarea creada')
+    cancelQuickCreate()
+    await nextTick()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } catch (err) {
+    quickCreateError.value = err?.response?.data?.message || err?.message || 'Error al crear la tarea. Intenta de nuevo.'
+  } finally {
+    isCreatingTask.value = false
+  }
 }
 
 // Función para abrir el modal de tareas por estado

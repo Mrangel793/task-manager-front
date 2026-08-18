@@ -118,23 +118,23 @@
             <div class="flex items-center gap-4">
               <div class="flex-1 max-w-xs">
                 <select
+                  v-if="availableStatuses.length > 0"
                   v-model="selectedStatus"
                   @change="handleStatusChangeFromSelect"
                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   :class="getStatusSelectClass(selectedStatus)"
                 >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="En Progreso">En Progreso</option>
-                  <option value="Por Verificar" v-if="task.status === 'Por Verificar'" hidden>Completada</option>
-                  <option value="Completada">Completada</option>
+                  <option :value="task.status" disabled>{{ task.status }} (actual)</option>
+                  <option v-for="s in availableStatuses" :key="s" :value="s">{{ s }}</option>
                 </select>
+                <p v-else class="text-sm text-gray-400 italic">No hay cambios de estado disponibles</p>
               </div>
               <div class="text-sm text-gray-500">
-                <p v-if="selectedStatus !== task.status" class="flex items-center text-blue-600">
+                <p v-if="statusSaved" class="flex items-center text-green-600">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  Cambio guardado automáticamente
+                  Cambio guardado
                 </p>
               </div>
             </div>
@@ -310,7 +310,19 @@ const isEditModalOpen = ref(false)
 const isReassignModalOpen = ref(false)
 const users = ref([])
 const selectedStatus = ref('')
+const statusSaved = ref(false)
 const taskHistory = ref([])
+
+// Transiciones válidas por estado (espejo del backend Task::canTransitionTo)
+const VALID_TRANSITIONS = {
+  'Pendiente':    ['En Progreso', 'Completada', 'Cancelada'],
+  'En Progreso':  ['Por Verificar', 'Completada', 'Pendiente', 'Cancelada'],
+  'Por Verificar':['Completada', 'En Progreso', 'Cancelada'],
+  'Completada':   [],
+  'Cancelada':    ['Pendiente'],
+}
+
+const availableStatuses = computed(() => VALID_TRANSITIONS[task.value?.status] ?? [])
 
 const statusBadges = {
   'Pendiente': { label: 'Pendiente', class: 'bg-gray-100 text-gray-800' },
@@ -429,6 +441,8 @@ const handleDelete = async () => {
 }
 
 const handleStatusChange = async (newStatus) => {
+  const previousStatus = task.value.status
+  statusSaved.value = false
   try {
     const role = authStore.userRole
     if (newStatus === 'Completada' && role !== 'admin' && role !== 'supervisor') {
@@ -437,11 +451,15 @@ const handleStatusChange = async (newStatus) => {
     await taskStore.updateTaskStatus(task.value.id, newStatus)
     task.value.status = newStatus
     selectedStatus.value = newStatus
-    toast.success(newStatus === 'Por Verificar' ? 'Tarea completada' : 'Estado actualizado correctamente')
-    // Recargar historial después de cambiar estado
+    statusSaved.value = true
+    setTimeout(() => { statusSaved.value = false }, 3000)
+    toast.success(newStatus === 'Por Verificar' ? 'Tarea enviada a verificación' : 'Estado actualizado correctamente')
     await loadTaskHistory()
   } catch (error) {
-    toast.error('Error al actualizar el estado')
+    // Revertir el dropdown al estado anterior si el backend rechaza el cambio
+    selectedStatus.value = previousStatus
+    const msg = error?.message || error?.data?.message || 'Error al actualizar el estado'
+    toast.error(msg)
   }
 }
 
