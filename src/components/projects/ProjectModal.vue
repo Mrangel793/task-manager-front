@@ -95,35 +95,11 @@
 
           <!-- Visibilidad -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Visibilidad</label>
-            <div class="grid grid-cols-2 gap-3">
-              <label
-                class="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors"
-                :class="formData.visibility === 'todos' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'"
-              >
-                <input type="radio" v-model="formData.visibility" value="todos" class="sr-only" />
-                <svg class="w-5 h-5 mt-0.5 flex-shrink-0" :class="formData.visibility === 'todos' ? 'text-primary-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <div>
-                  <p class="text-sm font-medium" :class="formData.visibility === 'todos' ? 'text-primary-700' : 'text-gray-700'">Toda la organización</p>
-                  <p class="text-xs text-gray-500 mt-0.5">Todos los miembros pueden verlo</p>
-                </div>
-              </label>
-              <label
-                class="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors"
-                :class="formData.visibility === 'miembros' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'"
-              >
-                <input type="radio" v-model="formData.visibility" value="miembros" class="sr-only" />
-                <svg class="w-5 h-5 mt-0.5 flex-shrink-0" :class="formData.visibility === 'miembros' ? 'text-primary-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <div>
-                  <p class="text-sm font-medium" :class="formData.visibility === 'miembros' ? 'text-primary-700' : 'text-gray-700'">Solo miembros</p>
-                  <p class="text-xs text-gray-500 mt-0.5">Solo quienes invites pueden verlo</p>
-                </div>
-              </label>
-            </div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">¿Quién puede ver este proyecto?</label>
+            <select v-model="formData.visibility" class="input-field w-full">
+              <option value="todos">Toda la organización</option>
+              <option value="miembros">Solo yo (y los que invite)</option>
+            </select>
           </div>
 
           <!-- Actions -->
