@@ -133,7 +133,10 @@
           <!-- Add member -->
           <div class="border-t border-gray-200 pt-3">
             <p class="text-xs font-medium text-gray-500 mb-2">Agregar miembro</p>
-            <div class="flex gap-2">
+            <p v-if="availableUsersToAdd.length === 0" class="text-xs text-gray-400 italic">
+              No hay más usuarios disponibles para agregar.
+            </p>
+            <div v-else class="flex gap-2">
               <select
                 v-model="selectedUserToAdd"
                 class="flex-1 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-primary-500 bg-white"
@@ -504,12 +507,13 @@ const loadProjectData = async () => {
 
 const loadUsers = async () => {
   try {
-    const data = await userService.getUsers({ active: true })
+    const data = await userService.getUsers({ is_active: true, per_page: 100 })
     if (Array.isArray(data)) users.value = data
     else if (data.data) users.value = data.data
     else if (data.users) users.value = data.users
     else users.value = []
-  } catch {
+  } catch (error) {
+    console.error('Error al cargar usuarios:', error)
     users.value = []
   }
 }

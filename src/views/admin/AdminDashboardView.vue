@@ -183,7 +183,7 @@
                 v-model="newTaskTitle"
                 placeholder="Nueva tarea"
                 rows="1"
-                class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+                class="w-full text-xl font-bold bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
                 @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
                 @keydown.enter.prevent="handleQuickCreateTask"
                 @keydown.esc="cancelQuickCreate"
@@ -192,7 +192,7 @@
                 v-model="newTaskDescription"
                 placeholder="Agregar detalles"
                 rows="1"
-                class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+                class="w-full text-base font-medium bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
                 @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
                 @keydown.esc="cancelQuickCreate"
               />
@@ -215,7 +215,7 @@
                   </div>
                   <span v-if="newTaskDueDate" class="text-xs text-primary-600 font-medium">{{ formatListDueDate(newTaskDueDate) }}</span>
                 </div>
-                <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-sm font-semibold transition-colors" :class="newTaskTitle.trim() && !isCreatingTask ? 'text-primary-600 hover:text-primary-800' : 'text-gray-400 cursor-not-allowed'">
+                <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-lg font-bold px-6 py-2 rounded-xl transition-all" :class="newTaskTitle.trim() && !isCreatingTask ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                   {{ isCreatingTask ? 'Guardando...' : 'Guardar' }}
                 </button>
               </div>
@@ -370,7 +370,7 @@
                   v-model="newTaskTitle"
                   placeholder="Nueva tarea"
                   rows="1"
-                  class="w-full text-base font-normal bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
+                  class="w-full text-xl font-bold bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 resize-none overflow-hidden leading-relaxed"
                   @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
                   @keydown.enter.prevent="handleQuickCreateTask"
                   @keydown.esc="cancelQuickCreate"
@@ -379,7 +379,7 @@
                   v-model="newTaskDescription"
                   placeholder="Agregar detalles"
                   rows="1"
-                  class="w-full text-sm bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
+                  class="w-full text-base font-medium bg-transparent border-none outline-none text-gray-600 placeholder-gray-400 resize-none overflow-hidden leading-relaxed mt-1 mb-3"
                   @input="e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }"
                   @keydown.esc="cancelQuickCreate"
                 />
@@ -402,7 +402,7 @@
                     </div>
                     <span v-if="newTaskDueDate" class="text-xs text-primary-600 font-medium">{{ formatListDueDate(newTaskDueDate) }}</span>
                   </div>
-                  <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-sm font-semibold transition-colors" :class="newTaskTitle.trim() && !isCreatingTask ? 'text-primary-600 hover:text-primary-800' : 'text-gray-400 cursor-not-allowed'">
+                  <button type="button" @click="handleQuickCreateTask" :disabled="!newTaskTitle.trim() || isCreatingTask" class="text-lg font-bold px-6 py-2 rounded-xl transition-all" :class="newTaskTitle.trim() && !isCreatingTask ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'">
                     {{ isCreatingTask ? 'Guardando...' : 'Guardar' }}
                   </button>
                 </div>

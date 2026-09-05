@@ -32,20 +32,20 @@
           required
         />
 
-        <BaseInput
-          v-model="formData.email"
-          type="email"
-          label="Correo electrónico"
-          placeholder="usuario@ejemplo.com"
-          :error="errors.email"
+        <PhoneInput
+          v-model="formData.phone"
+          label="Teléfono (WhatsApp)"
+          :error="errors.phone"
           :disabled="isSubmitting"
           required
         />
 
-        <PhoneInput
-          v-model="formData.phone"
-          label="Teléfono"
-          :error="errors.phone"
+        <BaseInput
+          v-model="formData.email"
+          type="email"
+          label="Correo electrónico (opcional)"
+          placeholder="usuario@ejemplo.com"
+          :error="errors.email"
           :disabled="isSubmitting"
         />
 
@@ -64,27 +64,16 @@
           <p v-if="errors.role" class="mt-1 text-sm text-red-600">{{ errors.role }}</p>
         </div>
 
-        <!-- Password fields only for new users -->
-        <template v-if="!isEdit">
-          <BaseInput
-            v-model="formData.password"
-            type="password"
-            label="Contraseña"
-            placeholder="Mínimo 8 caracteres"
-            :error="errors.password"
-            :disabled="isSubmitting"
-            required
-          />
-          <BaseInput
-            v-model="formData.confirmPassword"
-            type="password"
-            label="Confirmar contraseña"
-            placeholder="Repite la contraseña"
-            :error="errors.confirmPassword"
-            :disabled="isSubmitting"
-            required
-          />
-        </template>
+        <!-- Info: password auto-generated for new users -->
+        <div v-if="!isEdit" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-3">
+          <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-blue-800">Contraseña automática</p>
+            <p class="text-xs text-blue-600 mt-0.5">Se generará una contraseña segura y se enviará al usuario por WhatsApp junto con sus credenciales de acceso.</p>
+          </div>
+        </div>
 
         <!-- Optional: Reset password for existing users -->
         <div v-if="isEdit" class="bg-gray-50 p-4 rounded-lg">
@@ -194,10 +183,12 @@ const validateForm = () => {
     isValid = false
   }
 
-  if (!formData.email) {
-    errors.email = 'El correo electrónico es requerido'
+  if (!formData.phone) {
+    errors.phone = 'El teléfono es requerido'
     isValid = false
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+  }
+
+  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
     errors.email = 'Correo electrónico inválido'
     isValid = false
   }
@@ -207,20 +198,16 @@ const validateForm = () => {
     isValid = false
   }
 
-  // Password validation for new users or when changing password
-  const needsPassword = !isEdit.value || (isEdit.value && showPasswordFields.value && formData.password)
-
-  if (!isEdit.value && !formData.password) {
-    errors.password = 'La contraseña es requerida'
-    isValid = false
-  } else if (needsPassword && formData.password && formData.password.length < 8) {
-    errors.password = 'La contraseña debe tener al menos 8 caracteres'
-    isValid = false
-  }
-
-  if (needsPassword && formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = 'Las contraseñas no coinciden'
-    isValid = false
+  // Password validation only when editing and changing password
+  if (isEdit.value && showPasswordFields.value && formData.password) {
+    if (formData.password.length < 8) {
+      errors.password = 'La contraseña debe tener al menos 8 caracteres'
+      isValid = false
+    }
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Las contraseñas no coinciden'
+      isValid = false
+    }
   }
 
   return isValid
@@ -237,17 +224,17 @@ const handleSubmit = async () => {
   try {
     const userData = {
       name: formData.name.trim(),
-      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone.trim(),
       role: formData.role
     }
 
-    // Add phone if provided
-    if (formData.phone) {
-      userData.phone = formData.phone.trim()
+    // Add email only if provided
+    if (formData.email && formData.email.trim()) {
+      userData.email = formData.email.trim().toLowerCase()
     }
 
-    // Add password if creating or changing
-    if (!isEdit.value || (showPasswordFields.value && formData.password)) {
+    // Add password only when editing and changing
+    if (isEdit.value && showPasswordFields.value && formData.password) {
       userData.password = formData.password
     }
 
