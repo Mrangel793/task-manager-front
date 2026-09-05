@@ -5,14 +5,12 @@ const phoneRegex = /^\+[1-9]\d{1,14}$/
 
 // Schema de login
 export const loginSchema = yup.object({
-  email: yup
+  credential: yup
     .string()
-    .required('El correo electrónico es requerido')
-    .email('El correo electrónico debe ser válido'),
+    .required('El correo electrónico o teléfono es requerido'),
   password: yup
     .string()
     .required('La contraseña es requerida')
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
 })
 
 // Schema de registro

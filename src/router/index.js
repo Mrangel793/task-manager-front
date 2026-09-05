@@ -22,6 +22,14 @@ const routes = [
     component: () => import('@/views/auth/VerificationView.vue'),
     meta: { requiresGuest: true }
   },
+  {
+    path: '/activar/:token',
+    name: 'activate',
+    component: () => import('@/views/auth/ActivateAccountView.vue'),
+    // allowAuthenticated: el enlace de activación llega por WhatsApp y puede abrirse
+    // en un navegador con sesión de otro usuario; no debe rebotar a /tasks
+    meta: { requiresGuest: true, allowAuthenticated: true }
+  },
   // Protected routes (with layout)
   {
     path: '/',
@@ -277,7 +285,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // Verificar si es ruta de invitado
-  if (to.meta.requiresGuest && isAuthenticated) {
+  if (to.meta.requiresGuest && isAuthenticated && !to.meta.allowAuthenticated) {
     next({ name: 'tasks' })
     return
   }

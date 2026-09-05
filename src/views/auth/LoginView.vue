@@ -15,15 +15,15 @@
 
         <!-- Form -->
         <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Email Input -->
+          <!-- Credential Input -->
           <BaseInput
-            v-model="formData.email"
-            type="email"
-            label="Correo electrónico"
-            placeholder="tucorreo@ejemplo.com"
-            :error="errors.email"
+            v-model="formData.credential"
+            type="text"
+            label="Correo electrónico o teléfono"
+            placeholder="tucorreo@ejemplo.com o 3001234567"
+            :error="errors.credential"
             :disabled="isSubmitting"
-            autocomplete="email"
+            autocomplete="username"
             required
           />
 
@@ -113,12 +113,12 @@ const authStore = useAuthStore()
 const toast = useToast()
 
 const formData = reactive({
-  email: '',
+  credential: '',
   password: ''
 })
 
 const errors = reactive({
-  email: '',
+  credential: '',
   password: ''
 })
 
@@ -126,7 +126,7 @@ const isSubmitting = ref(false)
 const submitError = ref('')
 
 const clearErrors = () => {
-  errors.email = ''
+  errors.credential = ''
   errors.password = ''
   submitError.value = ''
 }
@@ -157,7 +157,7 @@ const handleSubmit = async () => {
 
   try {
     const loginData = await authStore.login({
-      email: formData.email,
+      credential: formData.credential,
       password: formData.password
     })
 

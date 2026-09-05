@@ -106,6 +106,27 @@ export const authService = {
   },
 
   /**
+   * Verificar token de activación de cuenta (enlace de un solo uso)
+   */
+  async verifyActivationToken(token) {
+    const response = await api.post('v1/auth/activate/verify', { token })
+
+    // El backend envuelve la respuesta en { success, message, data }
+    const responseData = response.data.data || response.data
+
+    return responseData
+  },
+
+  /**
+   * Activar cuenta estableciendo la contraseña definitiva
+   */
+  async activateAccount(payload) {
+    const response = await api.post('v1/auth/activate', payload)
+
+    return response.data
+  },
+
+  /**
    * Cerrar sesión
    */
   async logout() {
