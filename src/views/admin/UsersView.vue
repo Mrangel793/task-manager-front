@@ -223,7 +223,7 @@ const deleteUser = async () => {
     showDeleteModal.value = false
     userToDelete.value = null
   } catch (error) {
-    const message = error.response?.data?.message || error.response?.data?.detail || 'Error al eliminar el usuario'
+    const message = error.message || error.response?.data?.message || 'Error al eliminar el usuario'
     toast.error(message)
   } finally {
     isDeleting.value = false
