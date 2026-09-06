@@ -77,7 +77,7 @@ export const userService = {
    * Eliminar un usuario
    */
   async deleteUser(id) {
-    const response = await api.delete(`v1/users/${id}/`)
+    const response = await api.delete(`v1/users/${id}`)
     this.clearOperatorsCache() // Invalidar caché
     return response.data
   }
